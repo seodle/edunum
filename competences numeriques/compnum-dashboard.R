@@ -201,7 +201,7 @@ coded_text <- character(0)
 
 ui <- dashboardPage(
   
-  dashboardHeader(title = (span("Codage des compétences RCnum",
+  dashboardHeader(title = (span("Transfert des compétences numériques",
                                 style = "font-size: 28px")),
                   titleWidth = 550,
                   tags$li(actionLink("openModal", label = "", icon = icon("info")),
@@ -481,18 +481,81 @@ ui <- dashboardPage(
                 
                 column(4,
                        tags$h2("Réponses des enseignant.e.s"),
-                       selectInput(inputId = "no_repondant",label = "Répondant : ",choices = c("",1:nrow(table)),selected=""),
                        tableOutput("table_text2"),
-                       #actionButton("export_all", "Exporter toutes les données récoltées"),
-                       #div(style="display:inline-block",textOutput("text_all"))),
+                       div(style="display:inline-block",textOutput("text_all2"))
                        
                 ),
                 
                 column(8,
                        tags$h2("Facilitateurs/Obstacles"),
+                       actionButton("materielplus", "Ressources matérielles +",width = "180px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "materielplus", 
+                                 title = "L enseignant a le matériel adéquat en classe"),
+                       actionButton("materielmoins", "Ressources matérielles -",width = "180px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "materielmoins", 
+                                 title = "L enseignant manque du matériel adéquat en classe"),
+                       br(),
+                       actionButton("tempsplus", "Ressources temporelles +",width = "180px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "tempsplus", 
+                                 title = "L enseignant a le temps adéquat pour mettre en oeuvre ce qu il a vu en formation"),
+                       actionButton("tempsmoins", "Ressources temporelles -",width = "180px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "tempsmoins", 
+                                 title = "L enseignant manque de temps pour mettre en oeuvre ce qu il a vu en formation"),
+                       br(),
+                       actionButton("hierarchieplus", "Soutien hiérarchique +",width = "180px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "hierarchieplus", 
+                                 title = "L enseignant.e a le soutien de sa hiérarchie"),
+                       actionButton("hierarchiemoins", "Soutien hiérarchique -",width = "180px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "hierarchiemoins", 
+                                 title = "L enseignant.e manque du soutien de sa hiérarchie"),
+                       br(),
+                       actionButton("colleguesplus", "Soutien des collègues +",width = "180px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "colleguesplus", 
+                                 title = "L enseignant.e a le soutien de ses collègues"),
+                       actionButton("colleguesmoins", "Soutien des collègues -",width = "180px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "colleguesmoins", 
+                                 title = "L enseignant.e manque du soutien de ses collègues"),
+                       br(),
+                       actionButton("techniqueplus", "Soutien technique +",width = "180px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "techniqueplus", 
+                                 title = "L enseignant.e a le soutien technique nécessaire"),
+                       actionButton("techniquemoins", "Soutien technique -",width = "180px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "techniquemoins", 
+                                 title = "L enseignant.e manque de soutien technique"),
+                       br(),
+                       actionButton("pedagogiqueplus", "Soutien pédagogique +",width = "180px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "pedagogiqueplus", 
+                                 title = "L enseignant.e a le soutien pédagogique nécessaire"),
+                       actionButton("pedagogiquemoins", "Soutien pédagogique -",width = "180px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "pedagogiquemoins", 
+                                 title = "L enseignant.e manque de soutien pédagogique"),
+                       br(), br(),
+                       actionButton("compatibliteplus", "Comptabilité avec les pratiques habituelles +",width = "300px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "compatibliteplus", 
+                                 title = "Les ressources vues en formation sont compatibles avec les pratiques habituelles de l enseignant.e"),
+                       actionButton("compatiblitemoins", "Comptabilité avec les pratiques habituelles -",width = "300px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "compatiblitemoins", 
+                                 title = "Les ressources vues en formation sont peu compatibles avec les pratiques habituelles de l enseignant.e"),
+                       br(),
+                       actionButton("efficaciteplus", "Sentiment d'efficacité",width = "300px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "efficaciteplus", 
+                                 title = "L enseignant.e se sent à l aise dans la mise en oeuvre des ressources vues en formation"),
+                       actionButton("cognitifmoins", "Effort cognitif",width = "300px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "cognitifmoins", 
+                                 title = "La mise en oeuvre des ressources vues en formation représente une charge cognitive importante"),
+                       br(),
+                       actionButton("progresplus", "Progrès perçu",width = "300px",style="color: white;background-color: darkgreen", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "progresplus", 
+                                 title = "L enseignant.e voit ses élèves progresser grâce aux ressources vues en formation"),
+                       actionButton("chargemoins", "Charge de travail importante",width = "300px",style="color: white;background-color: darkred", onclick = "Shiny.setInputValue('btnLabel', this.innerText);"),
+                       bsTooltip(id = "chargemoins", 
+                                 title = "La mise en oeuvre des ressources vues en formation représente une charge de travail supplémentaire importante"),
+                       tags$h2("Codes réalisés"),
+                       DTOutput("table_code2"),
+                       
                 ))
               
-),
+      ),
       
       tabItem(tabName = "page3",
               
@@ -729,7 +792,23 @@ server <- function(input, output) {
                                 input$rcnum631 |
                                 input$rcnum632 |
                                 input$rcnum633 |
-                                input$rcnum634,
+                                input$rcnum634 |
+                                input$materielplus |
+                                input$materielmoins |
+                                input$tempsplus |
+                                input$tempsmoins |
+                                input$hierarchieplus |
+                                input$hierarchiemoins |
+                                input$colleguesplus |
+                                input$colleguesmoins |
+                                input$techniqueplus |
+                                input$techniquemoins |
+                                input$pedagogiqueplus |
+                                input$pedagogiquemoins |
+                                input$efficaciteplus |
+                                input$progresplus |
+                                input$chargemoins |
+                                input$cognitifmoins,
                               
                               {
                                 
@@ -737,7 +816,7 @@ server <- function(input, output) {
                                   
                                   if(is.null(rvs$data)){
                                     
-                                    rvs$data <- data.frame("Répondant"=c(as.numeric(input$no_repondant)),"Code RCNum" = c(input$btnLabel), "Sélection" = c(input$mydata))
+                                    rvs$data <- data.frame("Répondant"=c(as.numeric(input$no_repondant)),"Code" = c(input$btnLabel), "Sélection" = c(input$mydata))
                                     
                                   }
                                   
@@ -745,7 +824,7 @@ server <- function(input, output) {
                                     
                                     if(nrow(rvs$data)==0) {
                                       
-                                      rvs$data <- data.frame("Répondant"=c(as.numeric(input$no_repondant)),"Code RCNum" = c(input$btnLabel), "Sélection" = c(input$mydata))
+                                      rvs$data <- data.frame("Répondant"=c(as.numeric(input$no_repondant)),"Code" = c(input$btnLabel), "Sélection" = c(input$mydata))
                                       
                                     }
                                     
@@ -763,8 +842,8 @@ server <- function(input, output) {
                               },ignoreInit = TRUE)
   
   
-  output$table_code = renderDT(rvs$data[rvs$data$"Répondant"==as.numeric(input$no_repondant),],escape = FALSE, server = TRUE, editable = FALSE, extensions="Buttons", rownames = FALSE, 
-                               options = list(pageLength = 5, columnDefs = list(list(width = '30px', targets = c(0)))))
+  output$table_code <- output$table_code2 <- renderDT(rvs$data[rvs$data$"Répondant"==as.numeric(input$no_repondant),],escape = FALSE, server = TRUE, editable = FALSE, extensions="Buttons", rownames = FALSE, 
+                                                      options = list(pageLength = 5, columnDefs = list(list(width = '30px', targets = c(0)))))
   
   
   
@@ -1051,7 +1130,7 @@ server <- function(input, output) {
       
       if (input$repondant_rcnum == "Tous") {
         
-        rcnum <- rvs$data[,c("Code.RCNum")]
+        rcnum <- rvs$data[,c("Code")]
         
         data <- data.frame(table(rcnum))
         
@@ -1075,7 +1154,7 @@ server <- function(input, output) {
       
       if (input$repondant_rcnum != "Tous") {
         
-        rcnum <- rvs$data[rvs$data$"Répondant"==as.numeric(input$repondant_rcnum),c("Code.RCNum")]
+        rcnum <- rvs$data[rvs$data$"Répondant"==as.numeric(input$repondant_rcnum),c("Code")]
         
         print(rcnum)
         
