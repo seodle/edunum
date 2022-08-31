@@ -10,7 +10,8 @@ library(shinyBS)
 library(httr)
 library(curl)
 library(RColorBrewer)
-library(scales)
+library(scales) 
+library(ggplot2) 
 
 #######################  API  #######################
 
