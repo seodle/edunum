@@ -477,6 +477,21 @@ ui <- dashboardPage(
       
       tabItem(tabName = "page2",
               
+              fluidRow(
+                
+                column(4,
+                       tags$h2("Réponses des enseignant.e.s"),
+                       selectInput(inputId = "no_repondant",label = "Répondant : ",choices = c("",1:nrow(table)),selected=""),
+                       tableOutput("table_text2"),
+                       #actionButton("export_all", "Exporter toutes les données récoltées"),
+                       #div(style="display:inline-block",textOutput("text_all"))),
+                       
+                ),
+                
+                column(8,
+                       tags$h2("Facilitateurs/Obstacles"),
+                ))
+              
 ),
       
       tabItem(tabName = "page3",
@@ -784,7 +799,7 @@ server <- function(input, output) {
   
   
   output$table_text2 <- renderTable({
-    text3 <- if (input$no_repondant2=="") {""} else {table$contraintes_facilitateurs[as.numeric(input$no_repondant2)]$answers}
+    text3 <- if (input$no_repondant=="") {""} else {table$contraintes_facilitateurs[as.numeric(input$no_repondant)]$answers}
     data.frame(Questions = c("Facilitateurs/Obstacles"), Réponses = c(text3))
   })
   
