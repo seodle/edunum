@@ -1,0 +1,14 @@
+name: ShinyEvaluationDashboard
+title: ShinyEvaluationDashboard
+username:
+account: sunny-avry
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6331916
+bundleId: 6240613
+url: https://sunny-avry.shinyapps.io/ShinyEvaluationDashboard/
+when: 1661519171.66671
+lastSyncTime: 1661519171.66673
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: dataProcessing.R|evaluationDashboard_backup.R|evaluationDashboard.Rmd|export_csv.R|processed_numeric.csv|processed_text.csv|textual_data.csv|backup

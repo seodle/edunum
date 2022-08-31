@@ -1,0 +1,14 @@
+name: dataProcessing
+title: dataProcessing
+username:
+account: sunny-avry
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6380162
+bundleId: 5948624
+url: https://sunny-avry.shinyapps.io/dataProcessing/
+when: 1653594109.79234
+lastSyncTime: 1653594109.79235
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|data_evaluation_test.csv|evaluationDashboard_backup.R|evaluationDashboard.R|evaluationDashboard.Rmd|export_csv.R|processed_numeric.csv|processed_text.csv|renamed.csv|test.R|textual_data.csv|www/epfl_learn_logo.png|www/modele.png
