@@ -8,6 +8,7 @@ library(DT)
 library(shinyjs)
 library(tidyr)
 library(shinythemes)
+library(googledrive)
 
 ##############################################################
 #                    DATA EVALUATION FILE                    # 
@@ -1828,7 +1829,7 @@ server <- function(input, output, session) {
     showModal(
       modalDialog(title = "Contact",
                   footer = modalButton("Fermer"),
-                  p("Ce tableau de bord a été créé par l'équipe de recherche EduNum-EPFL. Pour tout renseignement : sunny.avry@epfl.ch"))
+                  p("Ce tableau de bord est sous licence MIT. Pour tout renseignement : sunny.avry@epfl.ch"))
     )
   })
   
