@@ -8,7 +8,6 @@ library(DT)
 library(shinyjs)
 library(tidyr)
 library(shinythemes)
-library(googledrive)
 
 ##############################################################
 #                    DATA EVALUATION FILE                    # 
