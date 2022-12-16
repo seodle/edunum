@@ -15,6 +15,18 @@ library(ggplot2)
 library(scales)
 library(ggplot2)
 
+sm_api_key = 'cOmUpOXfevWx5ay26.xBEyidJz6GAapRctumcP0wakhEoKWck.rCm9ilv0T9WvWbFCC28WiiH5Xm6Wi-SsjnPELjqqyZ6WoeEOAg7nLOwE4EWe' # Indicate the API key SurveyMonkey
+sm_secret = '242165516936365255945445679903801' # Indicate the secret code SurveyMonkey
+sm_client_id = '_Sb_CqBf7aKt77vQ' # Indicate the cient code SurveyMonkey
+
+survey_id <- "55768547134734" # Indicate the survey ID
+
+details <- paste0("https://api.surveymonkey.com/v3/surveys/",survey_id)
+content_details <- content(GET(details,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")
+
+collector <- "447296328"
+collector <- paste0("https://api.surveymonkey.com/v3/collectors/",collector)
+
 #######################  FIND SURVEYS AND COLLECTORS IDS ################
 
 # # Get the list of surveys to find the id of the wanted survey
@@ -53,18 +65,6 @@ library(ggplot2)
 # content_collectors <- content(GET(collectors,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")
 
 # Get the survey details
-
-sm_api_key = 'cOmUpOXfevWx5ay26.xBEyidJz6GAapRctumcP0wakhEoKWck.rCm9ilv0T9WvWbFCC28WiiH5Xm6Wi-SsjnPELjqqyZ6WoeEOAg7nLOwE4EWe' # Indicate the API key SurveyMonkey
-sm_secret = '242165516936365255945445679903801' # Indicate the secret code SurveyMonkey
-sm_client_id = '_Sb_CqBf7aKt77vQ' # Indicate the cient code SurveyMonkey
-
-survey_id <- "55768547134734" # Indicate the survey ID
-
-details <- paste0("https://api.surveymonkey.com/v3/surveys/",survey_id)
-content_details <- content(GET(details,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")
-
-collector <- "447296328"
-collector <- paste0("https://api.surveymonkey.com/v3/collectors/",collector)
 
 # Load the data if some already stored
 
