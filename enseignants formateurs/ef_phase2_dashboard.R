@@ -12,8 +12,6 @@ library(curl)
 library(RColorBrewer)
 library(scales)
 library(ggplot2)
-library(scales)
-library(ggplot2)
 
 
 sm_api_key = '' # Indicate the API key SurveyMonkey
@@ -69,9 +67,9 @@ collector <- paste0("https://api.surveymonkey.com/v3/collectors/",collector)
 
 # Load the data if some already stored
 
-if (file.exists("data_ef_d2.rds")){
+if (file.exists("data_ef_d2_random.rds")){
   
-  data <- readRDS(file = "data_ef_d2.rds")
+  data <- readRDS(file = "data_ef_d2_random.rds")
   
 } else {
   
@@ -84,432 +82,432 @@ if (file.exists("data_ef_d2.rds")){
 # The API provides the data by batch of 50 responses. If there is new responses, 
 # the number of responses is strictly superior to nrow(data) 
 
-if (content_details$response_count > nrow(data)) {
-  
-  data <- head(data,-(nrow(data) %% 50)) # Remove the last incomplete batch from the data
-  
-  #day <- str_sub(content(GET(collector,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")$url, -2, -1)
-  
-  pages <- (nrow(data) %/% 50 + 1):(content_details$response_count %/% 50 + 1) # Return the range of batches to be added to stored data
-  
-  responses_urls <- lapply(pages, function(x) {paste0("https://api.surveymonkey.com/v3/surveys/",survey_id,"/responses/bulk?simple=true&per_page=50&page=",x)}) # Return the urls of the bachtes of interest
-  
-  content_responses <- list()
-  
-  ## For each batch, a API call is made to get the data and stored in content_responses
-  
-  for (i in 1:length(responses_urls)) {
-    
-    content_responses <- append(content_responses,list(content(GET(responses_urls[[i]],add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")))
-  
-  }
-
-  # Questions
-  
-  columns <- c("date",
-               "journee",
-               "id_binome",
-               "accord_participation",
-               "etablissement",
-               "motivation",
-               "utilite_numerique",
-               "engagement_formateurs",
-               "engagement_formateurs_commentaire",
-               "lien_formation_travail",
-               "lien_formation_travail_commentaire",
-               "interet_gestes_de_base",
-               "interet_SAMR",
-               "interet_charte",
-               "interet_livre",
-               "interet_machine",
-               "interet_jeu",
-               "interet_concepts",
-               "interet_commentaire",
-               "utile_gestes_de_base",
-               "utile_SAMR",
-               "utile_charte",
-               "utile_livre",
-               "utile_machine",
-               "utile_jeu",
-               "utile_concepts",
-               "utile_commentaire",
-               "confiance_gestes_de_base",
-               "confiance_SAMR",
-               "confiance_charte",
-               "confiance_livre",
-               "confiance_machine",
-               "confiance_jeu",
-               "confiance_concepts",
-               "confiance_commentaire",
-               "competences_techniques",
-               "competences_techniques_commentaire",
-               "selection_technologie",
-               "selection_technologie_commentaire",
-               "entousiaste_apprentissage",
-               "intention_gestes_de_base",
-               "intention_charte",
-               "intention_livre",
-               "intention_machine",
-               "intention_jeu",
-               "intention_commentaire",
-               "ressources_disponibles",
-               "lien_contenus_pratique",
-               "interet_direction",
-               "encouragement_collegues",
-               "soutien",
-               "savoir_aide",
-               "charge_travail",
-               "classe_1P",
-               "classe_2P",
-               "classe_3P",
-               "classe_4P",
-               "classe_5P",
-               "classe_6P",
-               "classe_7P",
-               "classe_8P",
-               "classe_9S",
-               "classe_10S",
-               "classe_11S",
-               "classe_12S",
-               "age",
-               "experience_enseignement")
-  
-  # Réponses 
-  
-  table <- NULL
-  cycles <- rep(0, 12)
-  n_batch <- NULL
-  
-  for (n_batch in 1:length(content_responses)) {
-    
-    vec <- 1:length(content_responses[[n_batch]]$data)
-  
-    for (i in vec) {
-  
-      answers <- c(tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$date_created,
-                      error = function(e){return(NA)}
-                    ),
-    
-                    "J1",
-    
-                   tryCatch(
-                     content_responses[[n_batch]]$data[[i]]$custom_variables$EF,
-                     error = function(e){return(NA)}
-                   ),
-    
-                    #Q1
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[2]]$questions[[1]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                   
-                    #Q2
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[2]]$questions[[2]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                   
-                    #Q3
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[1]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                   
-                    #Q4
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[2]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q5
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q5 commentaire
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[2]]$text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q6
-                   tryCatch(
-                    content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[2]]$answers[[1]]$simple_text,
-                    error = function(e){return(NA)}
-                   ),
-                    #Q6 commentaire
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[2]]$answers[[2]]$text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q7 Gestes de bases
-                   tryCatch(
-                    gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[1]]$simple_text),
-                    error = function(e){return(NA)}
-                   ),
-                    #Q7 SAMR
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[2]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q7 Charte
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[3]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q7 Livre multimédia
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[4]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q7 Machine à tri
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[5]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q7 Jeu du robot
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[6]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q7 Concepts de bases en SI
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[7]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q7 commentaire
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[8]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q8 Gestes de bases
-                   tryCatch(
-                     gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[1]]$simple_text),
-                     error = function(e){return(NA)}
-                   ),
-                    #Q8 SAMR
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[2]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q8 Charte
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[3]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q8 Livre multimédia
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[4]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q8 Machine à tri
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[5]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q8 Jeu du robot
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[6]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q8 Concepts de bases en SI
-                    tryCatch(
-                    gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[7]]$simple_text),
-                    error = function(e){return(NA)}
-                    ),
-                    #Q8 commentaire
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[8]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q9 Gestes de bases
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[1]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q9 SAMR
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[2]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q9 Charte
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[3]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q9 Livre multimédia
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[4]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q9 Machine à tri
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[5]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q9 Jeu du robot
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[6]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q9 Concepts de bases en SI
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[7]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q9 commentaire
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[8]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q10
-                   tryCatch(
-                    content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[1]]$simple_text,
-                    error = function(e){return(NA)}
-                   ),
-                    #Q10 commentaire
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[2]]$text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q11
-                    tryCatch(
-                    content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[2]]$answers[[1]]$simple_text,
-                    error = function(e){return(NA)}
-                    ),
-                    #Q11 commentaire
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[2]]$answers[[2]]$text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q12
-                    tryCatch(
-                    content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[1]]$simple_text,
-                    error = function(e){return(NA)}
-                    ),
-                    #Q13 Gestes de bases
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[1]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q13 Charte
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[2]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q13 Livre multimédia
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[3]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q13 Machine à tri
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[4]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q13 Jeu du robot
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[5]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q13 commentaire
-                    tryCatch(
-                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[6]]$simple_text),
-                      error = function(e){return(NA)}
-                    ),
-                    #Q14
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[1]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q15
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q16
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[3]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q17
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[4]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q18
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[5]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q19
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[6]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-                    #Q20
-                    tryCatch(
-                      content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[7]]$answers[[1]]$simple_text,
-                      error = function(e){return(NA)}
-                    ),
-    
-                    #Q21
-                   
-                   if("try-error" %in% class(try(length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)))) {
-                     
-                     
-                     cycles <- rep(0,12)
-                   
-                   } 
-                   
-                   else {
-                     
-                     for (j in 1:length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)){
-                       
-                       n <- as.numeric(gsub("([0-9]+).*$", "\\1", content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers[[j]]$simple_text))
-                       
-                       cycles[n] <- cycles[n] + 1
-                       
-                     }
-                     
-                     cycles
-                     
-                     },
-                     
-            
-                    #Q22
-                    tryCatch(
-                    content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[2]]$answers[[1]]$simple_text,
-                    error = function(e){return(NA)}
-                    ),
-                   
-                    #Q23
-                    tryCatch(
-                    content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[3]]$answers[[1]]$simple_text,
-                    error = function(e){return(NA)}
-                    ))
-    
-      cycles <- rep(0, 12)
-      table <- rbind(table,answers)
-      
-    }
-  
-  }
-  
-  new_data <- as.data.frame(table)
-  colnames(new_data) <- columns
-  new_data$date <- substring(new_data$date,0,10)
-  data <- rbind(data,new_data)
-  rownames(data) <- 1:nrow(data)
-  
-
-  # Store updated data
-  
-  saveRDS(data, file = "data_ef_d2.rds")
-
-} else {
-  
-  cat("Pas de nouvelles données enregistrées")
-}
+# if (content_details$response_count > nrow(data)) {
+#   
+#   data <- head(data,-(nrow(data) %% 50)) # Remove the last incomplete batch from the data
+#   
+#   #day <- str_sub(content(GET(collector,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")$url, -2, -1)
+#   
+#   pages <- (nrow(data) %/% 50 + 1):(content_details$response_count %/% 50 + 1) # Return the range of batches to be added to stored data
+#   
+#   responses_urls <- lapply(pages, function(x) {paste0("https://api.surveymonkey.com/v3/surveys/",survey_id,"/responses/bulk?simple=true&per_page=50&page=",x)}) # Return the urls of the bachtes of interest
+#   
+#   content_responses <- list()
+#   
+#   ## For each batch, a API call is made to get the data and stored in content_responses
+#   
+#   for (i in 1:length(responses_urls)) {
+#     
+#     content_responses <- append(content_responses,list(content(GET(responses_urls[[i]],add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")))
+#   
+#   }
+# 
+#   # Questions
+#   
+#   columns <- c("date",
+#                "journee",
+#                "id_binome",
+#                "accord_participation",
+#                "etablissement",
+#                "motivation",
+#                "utilite_numerique",
+#                "engagement_formateurs",
+#                "engagement_formateurs_commentaire",
+#                "lien_formation_travail",
+#                "lien_formation_travail_commentaire",
+#                "interet_gestes_de_base",
+#                "interet_SAMR",
+#                "interet_charte",
+#                "interet_livre",
+#                "interet_machine",
+#                "interet_jeu",
+#                "interet_concepts",
+#                "interet_commentaire",
+#                "utile_gestes_de_base",
+#                "utile_SAMR",
+#                "utile_charte",
+#                "utile_livre",
+#                "utile_machine",
+#                "utile_jeu",
+#                "utile_concepts",
+#                "utile_commentaire",
+#                "confiance_gestes_de_base",
+#                "confiance_SAMR",
+#                "confiance_charte",
+#                "confiance_livre",
+#                "confiance_machine",
+#                "confiance_jeu",
+#                "confiance_concepts",
+#                "confiance_commentaire",
+#                "competences_techniques",
+#                "competences_techniques_commentaire",
+#                "selection_technologie",
+#                "selection_technologie_commentaire",
+#                "entousiaste_apprentissage",
+#                "intention_gestes_de_base",
+#                "intention_charte",
+#                "intention_livre",
+#                "intention_machine",
+#                "intention_jeu",
+#                "intention_commentaire",
+#                "ressources_disponibles",
+#                "lien_contenus_pratique",
+#                "interet_direction",
+#                "encouragement_collegues",
+#                "soutien",
+#                "savoir_aide",
+#                "charge_travail",
+#                "classe_1P",
+#                "classe_2P",
+#                "classe_3P",
+#                "classe_4P",
+#                "classe_5P",
+#                "classe_6P",
+#                "classe_7P",
+#                "classe_8P",
+#                "classe_9S",
+#                "classe_10S",
+#                "classe_11S",
+#                "classe_12S",
+#                "age",
+#                "experience_enseignement")
+#   
+#   # Réponses 
+#   
+#   table <- NULL
+#   cycles <- rep(0, 12)
+#   n_batch <- NULL
+#   
+#   for (n_batch in 1:length(content_responses)) {
+#     
+#     vec <- 1:length(content_responses[[n_batch]]$data)
+#   
+#     for (i in vec) {
+#   
+#       answers <- c(tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$date_created,
+#                       error = function(e){return(NA)}
+#                     ),
+#     
+#                     "J1",
+#     
+#                    tryCatch(
+#                      content_responses[[n_batch]]$data[[i]]$custom_variables$EF,
+#                      error = function(e){return(NA)}
+#                    ),
+#     
+#                     #Q1
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[2]]$questions[[1]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                    
+#                     #Q2
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[2]]$questions[[2]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                    
+#                     #Q3
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[1]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                    
+#                     #Q4
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[2]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q5
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q5 commentaire
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[2]]$text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q6
+#                    tryCatch(
+#                     content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[2]]$answers[[1]]$simple_text,
+#                     error = function(e){return(NA)}
+#                    ),
+#                     #Q6 commentaire
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[2]]$answers[[2]]$text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q7 Gestes de bases
+#                    tryCatch(
+#                     gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[1]]$simple_text),
+#                     error = function(e){return(NA)}
+#                    ),
+#                     #Q7 SAMR
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[2]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q7 Charte
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[3]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q7 Livre multimédia
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[4]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q7 Machine à tri
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[5]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q7 Jeu du robot
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[6]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q7 Concepts de bases en SI
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[7]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q7 commentaire
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[8]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q8 Gestes de bases
+#                    tryCatch(
+#                      gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[1]]$simple_text),
+#                      error = function(e){return(NA)}
+#                    ),
+#                     #Q8 SAMR
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[2]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q8 Charte
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[3]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q8 Livre multimédia
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[4]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q8 Machine à tri
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[5]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q8 Jeu du robot
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[6]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q8 Concepts de bases en SI
+#                     tryCatch(
+#                     gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[7]]$simple_text),
+#                     error = function(e){return(NA)}
+#                     ),
+#                     #Q8 commentaire
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[8]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q9 Gestes de bases
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[1]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q9 SAMR
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[2]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q9 Charte
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[3]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q9 Livre multimédia
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[4]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q9 Machine à tri
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[5]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q9 Jeu du robot
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[6]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q9 Concepts de bases en SI
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[7]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q9 commentaire
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[8]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q10
+#                    tryCatch(
+#                     content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[1]]$simple_text,
+#                     error = function(e){return(NA)}
+#                    ),
+#                     #Q10 commentaire
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[2]]$text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q11
+#                     tryCatch(
+#                     content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[2]]$answers[[1]]$simple_text,
+#                     error = function(e){return(NA)}
+#                     ),
+#                     #Q11 commentaire
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[2]]$answers[[2]]$text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q12
+#                     tryCatch(
+#                     content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[1]]$simple_text,
+#                     error = function(e){return(NA)}
+#                     ),
+#                     #Q13 Gestes de bases
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[1]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q13 Charte
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[2]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q13 Livre multimédia
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[3]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q13 Machine à tri
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[4]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q13 Jeu du robot
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[5]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q13 commentaire
+#                     tryCatch(
+#                       gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[6]]$simple_text),
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q14
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[1]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q15
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q16
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[3]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q17
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[4]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q18
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[5]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q19
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[6]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#                     #Q20
+#                     tryCatch(
+#                       content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[7]]$answers[[1]]$simple_text,
+#                       error = function(e){return(NA)}
+#                     ),
+#     
+#                     #Q21
+#                    
+#                    if("try-error" %in% class(try(length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)))) {
+#                      
+#                      
+#                      cycles <- rep(0,12)
+#                    
+#                    } 
+#                    
+#                    else {
+#                      
+#                      for (j in 1:length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)){
+#                        
+#                        n <- as.numeric(gsub("([0-9]+).*$", "\\1", content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers[[j]]$simple_text))
+#                        
+#                        cycles[n] <- cycles[n] + 1
+#                        
+#                      }
+#                      
+#                      cycles
+#                      
+#                      },
+#                      
+#             
+#                     #Q22
+#                     tryCatch(
+#                     content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[2]]$answers[[1]]$simple_text,
+#                     error = function(e){return(NA)}
+#                     ),
+#                    
+#                     #Q23
+#                     tryCatch(
+#                     content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[3]]$answers[[1]]$simple_text,
+#                     error = function(e){return(NA)}
+#                     ))
+#     
+#       cycles <- rep(0, 12)
+#       table <- rbind(table,answers)
+#       
+#     }
+#   
+#   }
+#   
+#   new_data <- as.data.frame(table)
+#   colnames(new_data) <- columns
+#   new_data$date <- substring(new_data$date,0,10)
+#   data <- rbind(data,new_data)
+#   rownames(data) <- 1:nrow(data)
+#   
+# 
+#   # Store updated data
+#   
+#   saveRDS(data, file = "data_ef_d2_random.rds")
+# 
+# } else {
+#   
+#   cat("Pas de nouvelles données trouvées sur SurveyMonkey")
+# }
   
 mapping_agreement <- c("Pas du tout d'accord"=1,
                        "Pas d'accord"=2,
@@ -665,18 +663,26 @@ server <- function(input, output) {
   
   observe({
     
-    if (input$id %in% c("4t0ugjo",
-                        "amrl926",
-                        "1ox2g53",
-                        "5ve4wgf",
-                        "9lp0h28",
-                        "va75qgr",
-                        "031oftw",
-                        "jv3kmdz",
-                        "g6l4gur",
-                        "tbu0m9c",
-                        "9kdg8oi",
-                        "0c0m5dc")) {
+    if (input$id %in% c("obw3jrd",
+                        "40keotn",
+                        "9uf2ib6",
+                        "5xmaye9",
+                        "ybmpnkb",
+                        "om48q9u",
+                        "2pp4giw",
+                        "vttt8rj",
+                        "kx3k72w",
+                        "gwre2a3",
+                        "36g1i06",
+                        "vqs0qey",
+                        "76xi73r",
+                        "an0m77u",
+                        "pypf24m",
+                        "pzn9kos",
+                        "ksbng32",
+                        "iobc7c8",
+                        "l0bsecc",
+                        "y4xczal")) {
       
       output$demoPlot <- renderPlot({
         
@@ -688,7 +694,8 @@ server <- function(input, output) {
               geom_jitter(shape=16, size=3, position=position_jitter(width = 0.3, height = 0)) +
               labs(title = "                 Répartition de l'âge des enseignant.e.s") +
               theme_minimal() +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -711,7 +718,8 @@ server <- function(input, output) {
               geom_jitter(shape=16, size=3, position=position_jitter(width = 0.3, height = 0)) +
               labs(title = "                    Répartition du nombre d'années d'expérience") +
               theme_minimal() +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -737,7 +745,8 @@ server <- function(input, output) {
               theme_minimal() +
               scale_x_discrete(labels=label_wrap(15)) +
               labs(title = "                  Répartition des enseignant.e.s par établissement") +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -781,7 +790,8 @@ server <- function(input, output) {
               theme_minimal() +
               scale_x_discrete(labels=label_wrap(15)) +
               labs(title = "                            Répartition des enseignant.e.s par degré") +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -814,7 +824,8 @@ server <- function(input, output) {
                                             "D'accord",
                                             "Tout à fait \nd'accord"), breaks = 1:7) +
               theme_minimal() +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -843,7 +854,8 @@ server <- function(input, output) {
                                             "D'accord",
                                             "Tout à fait \nd'accord"), breaks = 1:7) +
               theme_minimal() +   
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -876,7 +888,8 @@ server <- function(input, output) {
                                             "D'accord",
                                             "Tout à fait \nd'accord"), breaks = 1:7) +
               theme_minimal() +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -905,7 +918,8 @@ server <- function(input, output) {
                                             "Plutôt \nd'accord",
                                             "D'accord",
                                             "Tout à fait \nd'accord"), breaks = 1:7) +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -1013,7 +1027,8 @@ server <- function(input, output) {
                                             "Plutôt \nd'accord",
                                             "D'accord",
                                             "Tout à fait \nd'accord"), breaks = 1:7) +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -1061,7 +1076,8 @@ server <- function(input, output) {
                                             "Plutôt \nd'accord",
                                             "D'accord",
                                             "Tout à fait \nd'accord"), breaks = 1:7) +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
@@ -1110,7 +1126,8 @@ server <- function(input, output) {
                                             "Plutôt \nd'accord",
                                             "D'accord",
                                             "Tout à fait \nd'accord"), breaks = 1:7) +
-              theme(plot.title = element_text(face = "italic", size = 10),
+              theme(plot.title.position = "plot",
+                    plot.title = element_text(face = "italic", size = 10),
                     legend.position = "none",
                     axis.title.x=element_blank(),
                     axis.title.y=element_blank(),
