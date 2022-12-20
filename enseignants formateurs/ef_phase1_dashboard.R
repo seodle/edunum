@@ -10,11 +10,27 @@ library(shinyBS)
 library(httr)
 library(curl)
 library(RColorBrewer)
-library(scales) 
-library(ggplot2) 
 library(scales)
 library(ggplot2)
-    
+library(scales)
+library(ggplot2)
+
+
+################################# DATA COLLECTION VIA SurveyMonkey API #################################
+
+
+sm_api_key = 'cOmUpOXfevWx560egh1njr2VdHlQBpAay26.xBEyidJz6GAapRctumcP0wakhEoKWck.rCm9ilv0T9WvWbFCC28WiiH5Xm6Wi-SsjnPELjqqyZ6WoeEOAg7nLOwE4EWe'
+sm_secret = '242165516931955153453450636525599903801'
+sm_client_id = '_Sb_Cqc5RmSDBf7aKt77vQ'
+
+survey_id <- "508351659"
+
+details <- paste0("https://api.surveymonkey.com/v3/surveys/",survey_id)
+content_details <- content(GET(details,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")
+
+collector <- "447634539"
+collector <- paste0("https://api.surveymonkey.com/v3/collectors/",collector)
+
 #######################  FIND SURVEYS AND COLLECTORS IDS ################
 
 # # Get the list of surveys to find the id of the wanted survey
@@ -54,160 +70,520 @@ library(ggplot2)
 
 # Get the survey details
 
-sm_api_key = 'cOmUpOXfevWx560egh1njr2VdHlQBpAay26.xBdsadaswakhEoKWck.rCm9ilv0T9WvWbFCC28WiiH5Xm6Wi-SsjnPELjqqyZ6WoeEOAg7nLOwE4EWe'
-sm_secret = '24216551693195515dsdsa6525599903801'
-sm_client_id = '_Sb_Cqdsadsad7aKt77vQ'
-
-survey_id <- "505454359"
-
-details <- paste0("https://api.surveymonkey.com/v3/surveys/",survey_id)
-content_details <- content(GET(details,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")
-
-collector <- "447634543539"
-collector <- paste0("https://api.surveymonkey.com/v3/collectors/",collector)
-
-# Get the stored data from drive
+# Load the data if some already stored
 
 if (file.exists("data_ef_d1.rds")){
   
-  data_participants <- readRDS(file = "data_ef_d1.rds")
+  data <- readRDS(file = "data_ef_d1.rds")
   
 } else {
   
-  data_participants <- list()
+  data <- data.frame()
   
 }
 
-# Get the responses
+# Get the responses from SurveyMonkey
 
-if (content_details$response_count > length(data_participants)) {
+# The API provides the data by batch of 50 responses. If there is new responses, 
+# the number of responses is strictly superior to nrow(data) 
+
+if (content_details$response_count > nrow(data)) {
   
-  data_participants <- head(data_participants,-(length(data_participants) %% 50))
+  data <- head(data,-(nrow(data) %% 50)) # Remove the last incomplete batch from the data
   
-  day <- str_sub(content(GET(collector,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")$url, -2, -1)
+  #day <- str_sub(content(GET(collector,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")$url, -2, -1)
   
-  pages <- (length(data_participants) %/% 50 + 1):(content_details$response_count %/% 50 + 1)
+  pages <- (nrow(data) %/% 50 + 1):(content_details$response_count %/% 50 + 1) # Return the range of batches to be added to stored data
   
-  responses_urls <- lapply(pages, function(x) {paste0("https://api.surveymonkey.com/v3/surveys/",survey_id,"/responses/bulk?simple=true&per_page=50&page=",x)})
+  responses_urls <- lapply(pages, function(x) {paste0("https://api.surveymonkey.com/v3/surveys/",survey_id,"/responses/bulk?simple=true&per_page=50&page=",x)}) # Return the urls of the bachtes of interest
   
   content_responses <- list()
+  
+  ## For each batch, a API call is made to get the data and stored in content_responses
   
   for (i in 1:length(responses_urls)) {
     
     content_responses <- append(content_responses,list(content(GET(responses_urls[[i]],add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")))
+    
   }
   
-  # Get the list of data of interest
+  # Questions
   
-  data <- list()
+  columns <- c("journee",
+               "date",
+               "id_binome",
+               "age",
+               "experience",
+               "etablissement",
+               "degre_1P",
+               "degre_2P",
+               "degre_3P",
+               "degre_4P",
+               "degre_5P",
+               "degre_6P",
+               "degre_7P",
+               "degre_8P",
+               "degre_9S",
+               "degre_10S",
+               "degre_11S",
+               "degre_12S",
+               "motivation",
+               "utilite_techno",
+               "contenu_riche",
+               "contenu_adapte",
+               "appreciation_generale_commentaires",
+               "engagement_formateurs",
+               "engagement_formateurs_commentaires",
+               "liens_formation_pratique",
+               "liens_formation_pratique_commentaire",
+               "interet_pratiques",
+               "interet_algorithmes",
+               "interet_partages",
+               "interet_scratch",
+               "interet_activites_commentaires",
+               "utilite_pratiques",
+               "utilite_algorithmes",
+               "utilite_partages",
+               "utilite_scratch",
+               "utilite_activites_commentaires",
+               "confiance_pratiques",
+               "confiance_algorithmes",
+               "confiance_partages",
+               "confiance_scratch",
+               "confiance_activites_commentaires",
+               "competence1",
+               "competence2",
+               "acquisition_pratiques_commentaires",
+               "competence3",
+               "competence4",
+               "competence5",
+               "acquisition_algorithmes_commentaires",
+               "competence6",
+               "competence7",
+               "acquisition_partage_commentaires",
+               "utiliser_nouveaux_apprentissages",
+               "intention_pratiques",
+               "intention_algorithmes",
+               "intention_partages",
+               "intention_scratch",
+               "intention_utilisation_commentaires",
+               "adoption_charte",
+               "adoption_livre",
+               "adoption_machine",
+               "adoption_jeu",
+               "adoption_orchestration",
+               "adoption_bestioles",
+               "adoption_thymio",
+               "adoption_bluebot",
+               "adoption_edunum",
+               "adoption_utiliser_application",
+               "adoption_chope_pub",
+               "adoption_ecrans",
+               "adoption_tapis",
+               "adoption_stopmotion",
+               "adoption_album_loupe",
+               "adoption_album_livre",
+               "adoption_album_pfff",
+               "adoption_pasconcerne",
+               "conditions_compatibilite",
+               "conditions_soutien",
+               "conditions_charge",
+               "conditions_plusvalue")
+  
+  # Réponses 
+  
+  table <- NULL
+  cycles <- rep(0, 12)
+  activites <-  rep(0,18)
+  n_batch <- NULL
   
   for (n_batch in 1:length(content_responses)) {
     
-    for (n_participant in 1:length(content_responses[[n_batch]]$data)) {
+    vec <- 1:length(content_responses[[n_batch]]$data)
+    
+    for (i in vec) {
       
-      participant <- c()
-      
-      participant <- append(participant,paste0("h id_binome"))
-      participant <- append(participant,paste0("v ",content_responses[[n_batch]]$data[[n_participant]]$custom_variables$EF))
-      participant <- append(participant,paste0("h date"))
-      participant <- append(participant,paste0("v ",content_responses[[n_batch]]$data[[n_participant]]$date_created))
-      
-      for (n_page in 1:length(content_responses[[n_batch]]$data[[n_participant]]$pages)) {
+      answers <- c(
         
-        total_questions_page <- length(content_responses[[n_batch]]$data[[n_participant]]$pages[[n_page]]$questions)
+        "J4",
         
-        if (total_questions_page > 0) {
+        tryCatch(
+        content_responses[[n_batch]]$data[[i]]$date_created,
+        error = function(e){return(NA)}
+      ),
+      
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$custom_variables$EF,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q22 Age
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[2]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q23 Expérience
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[3]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q2 Etablissement
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[2]]$questions[[2]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q21 Degrés
+      
+      if("try-error" %in% class(try(length(content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers)))) {
+        
+        cycles <- rep(0,12)
+        
+      } 
+      
+      else {
+        
+        for (j in 1:length(content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers)){
           
-          for (n_question in 1:total_questions_page) {
-            
-            heading <<- gsub("<.*?>","",content_responses[[n_batch]]$data[[n_participant]]$pages[[n_page]]$questions[[n_question]]$heading)
-            type <<- paste0(content_responses[[n_batch]]$data[[n_participant]]$pages[[n_page]]$questions[[n_question]]$family," ",content_responses[[n_batch]]$data[[n_participant]]$pages[[n_page]]$questions[[n_question]]$subtype)
-            
-            participant <- append(participant,paste0("t ",type))
-            participant <- append(participant,paste0("h ",heading))
-            
-            total_subquestions_question <- length(content_responses[[n_batch]]$data[[n_participant]]$pages[[n_page]]$questions[[n_question]]$answers)
-            
-            for (n_subquestion in 1:total_subquestions_question) {
-              
-              subtitle <<- gsub("<.*?>","",gsub(" \\|.*","",content_responses[[n_batch]]$data[[n_participant]]$pages[[n_page]]$questions[[n_question]]$answers[[n_subquestion]]$simple_text))
-              value <<- gsub(".*\\| ","",content_responses[[n_batch]]$data[[n_participant]]$pages[[n_page]]$questions[[n_question]]$answers[[n_subquestion]]$simple_text)
-              
-              if (subtitle != value) {
-                
-                participant <- append(participant,paste0("h ", heading, " - ", subtitle))
-                
-              }
-              
-              if (subtitle == value & str_sub(type, 1, 15) == "multiple_choice"){
-                
-                participant <- append(participant,paste0("h ", heading, " - ", subtitle))
-                
-              }
-              
-              participant <- append(participant,paste0("v ",value))
-            }
-          }
+          n <- as.numeric(gsub("([0-9]+).*$", "\\1", content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers[[j]]$simple_text))
+          
+          cycles[n] <- cycles[n] + 1
+
         }
-      }
-      
-      data[[length(data)+1]] <- participant
-    }
-  }
-  
-  # Store the data in a list
-  
-  for (i in 1:length(data)) {
-    
-    select <- substr(data[[i]][grep("^[hv].*",data[[i]])],1,1)
-    toremove <- c()
-    
-    for (j in 1:(length(select)-1)){
-      
-      if (select[j] == select[j+1]) {
         
-        toremove <-  append(toremove, j)
-      }
+        cycles
+        
+      },
+      
+      #Q3 Motivation
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[1]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q4 Utilité techno
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[2]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q5 Contenu riche
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[1]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q5 Contenu adapté
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[2]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q5 Appreciation générale commentaires
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[3]]$text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q6 Engagement formateurs
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q6 Engagement formateurs commentaires
+    
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[2]]$text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q7 Liens formation pratique
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[2]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q7 Liens formation pratique commentaires
+      
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[2]]$answers[[2]]$text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q8 Plaisir pratiques numériques
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[1]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q8 Plaisir algorithmes divers
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[2]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q8 Plaisir partages et droits
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[3]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q8 Plaisir scratch junior
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[4]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q8 Intéret activités commentaire
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[5]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q9 Utilite pratiques numeriques
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[1]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      #Q9 Utilite algorithmes divers
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[2]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q9 Utilite partages et droits
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[3]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q9 Utilite scratch junior
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[4]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q9 Utilite activites commentaires
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[5]]$text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q10 Confiance pratiques numeriques
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[1]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      #Q10 Confiance algorithmes divers
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[2]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q10 Confiance partages et droits
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[3]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q10 Confiance scratch junior
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[4]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q10 Confiance activites commentaires
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[5]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q11 Competence 1 pratiques numériques
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[1]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q11 Competence 2 pratiques numériques
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[2]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q11 Acquisition pratiques commentaires
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[3]]$text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q12 Competence 3 Algortithmes divers
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[1]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q12 Competence 4 Algortithmes divers
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[2]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q12 Competence 5 Algortithmes divers
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[3]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q12 Acquisition Algortithmes divers commentaire
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[4]]$text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q13 Competence 6 Partage
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[1]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q13 Competence 7 Partage
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[2]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q13 Acquisition Partage Commentaire
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[3]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      
+      #Q14 Utiliser nouveaux apprentissages
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[1]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q15 Intention pratiques
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[1]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q15 Intention algorithmes
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[2]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q15 Intention partage
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[3]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q15 Intention scratch
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[4]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q15 Intention utilisation commentaires
+      tryCatch(
+        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[5]]$simple_text),
+        error = function(e){return(NA)}
+      ),
+      
+      #Q16 Adoption
+      
+      if("try-error" %in% class(try(length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)))) {
+        
+        activites <- rep(0,18)
+        
+      } 
+      
+      else {
+        
+        for (j in 1:length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)){
+          
+          n <- content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers[[j]]$simple_text
+          n <- case_when(n == "La Charte (vu en J1)" ~ 1,
+                         n == "BookCreator - le livre multimédia (vu en J1)" ~ 2,
+                         n == "La Machine à tri (vu en J1)" ~ 3,
+                         n == "Le Jeu du robot (vu en J1)" ~ 4,
+                         n == "Orchestration et gestion des IPads de la classe (vu en J1)" ~ 5,
+                         n == "Les bestioles (vu en J1)" ~ 6,
+                         n == "Le robot Thymio (vu en J2)" ~ 7,
+                         n == "Le robot Bluebot (vu en J2)" ~ 8,
+                         n == "Edunum et différenciation (vu en J2)" ~ 9,
+                         n == "Utiliser des applications numériques disciplinaires (vu en J3)" ~ 10,
+                         n == "Chope la pub (vu en J3)" ~ 11,
+                         n == "Où sont les écrans - poster de la ville ? (vu en J3)" ~ 12,
+                         n == "Le tapis des écrans (vu en J2)" ~ 13,
+                         n == "Stop Motion - film d’animation (vu en J3)" ~ 14,
+                         n == "Album «Loupé» (vu en J3)" ~ 15,
+                         n == "Album «C’est un livre» (vu en J3)" ~ 16,
+                         n == "Album «Pfff» (vu en J2)" ~ 17,
+                         n == "Pas concerné" ~ 18)
+          
+          activites[n] <- activites[n] + 1
+          
+        }
+        
+        activites
+        
+      },
+      
+      #Q17 Conditions compatibilite
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[1]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q18 Conditions soutien
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[2]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q19 Conditions charge
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[3]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ),
+      
+      #Q20 Conditions plusvalue
+      tryCatch(
+        content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[4]]$answers[[1]]$simple_text,
+        error = function(e){return(NA)}
+      ))
+      
+      cycles <- rep(0, 12)
+      activites <- rep(0,18)
+      table <- rbind(table,answers)
       
     }
-    
-    if (!is.null(toremove)) {
-      
-      selection <- data[[i]][grep("^[hv].*",data[[i]])][-toremove]
-      
-    }
-    
-    table_participant <-  data.frame(questions = str_sub(selection[grep("^[h].*", selection)], 3, -1),
-                                     values = str_sub(selection[grep("^[v].*", selection)], 3, -1))
-    
-    data_participants <- c(data_participants, list(table_participant))
     
   }
   
+  new_data <- as.data.frame(table)
+  colnames(new_data) <- columns
+  new_data$date <- substring(new_data$date,0,10)
+  data <- rbind(data,new_data)
+  rownames(data) <- 1:nrow(data)
   
-  # Store data
+  # Store updated data
   
-  saveRDS(data_participants, file = "data_ef_d1.rds")
+  saveRDS(data, file = "data_ef_d1.rds")
   
 } else {
   
-  cat("Pas de nouvelles données enregistrées")
-  print(length(data_participants))
-  
+  cat("Pas de nouvelles données trouvées sur SurveyMonkey")
 }
-
-dates <- c()
-
-if (length(data_participants) > 0) {
-  
-  for (i in 1:length(data_participants)) {
-    dates <-  append(substring(filter(data_participants[[i]], questions %in% c("date"))$values,0,10),dates)
-  }
-}
-
-
-#####################################################
-
 
 mapping_agreement <- c("Pas du tout d'accord"=1,
                        "Pas d'accord"=2,
@@ -225,7 +601,21 @@ mapping_acquisition <- c("Pas du tout d'acquis"=1,
                          "Acquis"=6,
                          "Tout à fait acquis"=7)
 
-#####################################################
+agreement <- c("Pas du tout d'accord",
+               "Pas d'accord",
+               "Plutôt pas d'accord",
+               "Ni en accord ni en désaccord",
+               "Plutôt d'accord",
+               "D'accord",
+               "Tout à fait d'accord")
+
+for (i in colnames(data)){
+  if (any(agreement %in% unique(data[,i]))){
+    data[,i] <- mapping_agreement[data[,i]]
+  }
+}
+
+################################# DASHBOARD #################################
 
 ui <- dashboardPage(title="Formation EF - Retours enseignants",
                     
@@ -251,16 +641,15 @@ ui <- dashboardPage(title="Formation EF - Retours enseignants",
                                 fluidRow(
                                   
                                   column(12, align="center",
-                                         textInput("id", label = h3("Entrez votre identifiant :"), value = ""),
-                                         HTML("<em>Le chargement peut prendre un moment...</em>"),
-                                         br(),br())
+                                         textInput("id", label = h3("Entrez votre identifiant EF :"), value = ""),
+                                         br())
                                 ),
                                 
                                 fluidRow(
                                   
                                   column(12, align="center",
                                          div(style = "display:inline-block; float:center", selectInput(inputId="journee",label = "Journée :",choices = c("J4"),width=120)),
-                                         div(style = "display:inline-block; float:center", selectInput(inputId="session",label = "Session :",choices = unique(dates),width=120)),
+                                         div(style = "display:inline-block; float:center", selectInput(inputId="session",label = "Session :",choices = unique(data$date),width=120)),
                                          br())
                                 ),
                                 
@@ -376,199 +765,8 @@ server <- function(input, output) {
                         "9kdg8oi",
                         "0c0m5dc")) {
       
-      ############## Processed data #######################
-      
-      # Get the stored data
-      
-      if (nrow(x) != 0) {
-        
-        data <- readRDS(file = "data_ef_d1_processed.rds")
-        
-      } else {
-      
-        data <- data.frame(journee=character(),
-                           date=character(),
-                           id_binome=character(),
-                           age=character(),
-                           experience=character(),
-                           etablissement=character(),
-                           degre_1P=character(),
-                           degre_2P=character(),
-                           degre_3P=character(),
-                           degre_4P=character(),
-                           degre_5P=character(),
-                           degre_6P=character(),
-                           degre_7P=character(),
-                           degre_8P=character(),
-                           degre_9S=character(),
-                           degre_10S=character(),
-                           degre_11S=character(),
-                           degre_12S=character(),
-                           motivation=character(),
-                           utilite_techno=character(),
-                           contenu_riche=character(),
-                           contenu_adapte=character(),
-                           appreciation_generale_commentaires=character(),
-                           engagement_formateurs=character(),
-                           liens_formation_pratique=character(),
-                           engagement_commentaires=character(),
-                           liens_formation_pratique_commentaires=character(),
-                           interet_activites_commentaires=character(),
-                           utilite_activites_commentaires=character(),
-                           autoefficacite_activites_commentaires=character(),
-                           intention_utilisation_commentaires=character(),
-                           acquisition_pratiques_commentaires=character(),
-                           acquisition_algorithmes_commentaires=character(),
-                           acquisition_partage_commentaires=character(),
-                           miseenoeuvre_commentaires=character(),
-                           interet_pratiques=character(),
-                           interet_algorithmes=character(),
-                           interet_partages=character(),
-                           interet_scratch=character(),
-                           utilite_pratiques=character(),
-                           utilite_algorithmes=character(),
-                           utilite_partages=character(),
-                           utilite_scratch=character(),
-                           confiance_pratiques=character(),
-                           confiance_algorithmes=character(),
-                           confiance_partages=character(),
-                           confiance_scratch=character(),
-                           intention_pratiques=character(),
-                           intention_algorithmes=character(),
-                           intention_partages=character(),
-                           intention_scratch=character(),
-                           competence1=character(),
-                           competence2=character(),
-                           competence3=character(),
-                           competence4=character(),
-                           competence5=character(),
-                           competence6=character(),
-                           competence7=character(),
-                           compatibilite=character(),
-                           plusvalue=character(),
-                           soutien=character(),
-                           charge=character(),
-                           charte=character(),
-                           livre=character(),
-                           machine=character(),
-                           jeu=character(),
-                           orchestration=character(),
-                           bestioles=character(),
-                           thymio=character(),
-                           bluebot=character(),
-                           edunum=character(),
-                           utiliser_application=character(),
-                           chope_pub=character(),
-                           ecrans=character(),
-                           tapis=character(),
-                           stopmotion=character(),
-                           album_loupe=character(),
-                           album_livre=character(),
-                           album_pfff=character(),
-                           pasconcerne=character())
-      }
-      
-      if (length(data_participants) > nrow(data)) {
-        
-        row_participant <- c()
-        len_data <- nrow(data) + 1
-        for (i in len_data:length(data_participants)) {
-    
-          row_participant <-  c(ifelse(substring(filter(data_participants[[i]], questions %in% c("date"))$values,0,10) < "2022-12-05","J4",NA),
-                                ifelse(is.null(substring(filter(data_participants[[i]], questions %in% c("date"))$values,0,10)),NA,substring(filter(data_participants[[i]], questions %in% c("date"))$values,0,10)),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("id_binome"))$values),NA,filter(data_participants[[i]], questions %in% c("id_binome"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Votre âge"))$values),NA,filter(data_participants[[i]], questions %in% c("Votre âge"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Votre expérience dans l'enseignement en année(s)"))$values),NA,filter(data_participants[[i]], questions %in% c("Votre expérience dans l'enseignement en année(s)"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Dans quel établissement enseignez-vous?"))$values),NA,filter(data_participants[[i]], questions %in% c("Dans quel établissement enseignez-vous?"))$values),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 1P"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 1P"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 2P"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 2P"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 3P"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 3P"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 4P"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 4P"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 5P"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 5P"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 6P"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 6P"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 7P"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 7P"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 8P"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 8P"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 9S"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 9S"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 10S"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 10S"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 11S"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 11S"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Vous enseignez en - 12S"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Vous enseignez en - 12S"))$value),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Quand je participe à une formation continue, j'essaie d'apprendre le plus possible."))$values),NA,filter(data_participants[[i]], questions %in% c("Quand je participe à une formation continue, j'essaie d'apprendre le plus possible."))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Je pense que les technologies numériques sont utiles pour l'apprentissage."))$values),NA,filter(data_participants[[i]], questions %in% c("Je pense que les technologies numériques sont utiles pour l'apprentissage."))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Le contenu de la formation d'aujourd'hui - ...était riche et intéressant"))$values),NA,filter(data_participants[[i]], questions %in% c("Le contenu de la formation d'aujourd'hui - ...était riche et intéressant"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Le contenu de la formation d'aujourd'hui - ...avait un niveau adapté"))$values),NA,filter(data_participants[[i]], questions %in% c("Le contenu de la formation d'aujourd'hui - ...avait un niveau adapté"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Le contenu de la formation d'aujourd'hui - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("Le contenu de la formation d'aujourd'hui - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("J'ai apprécié l'engagement des formateurs et formatrices"))$values),NA,filter(data_participants[[i]], questions %in% c("J'ai apprécié l'engagement des formateurs et formatrices"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Les activités et les exercices utilisés par les formateurs et formatrices me permettent de voir comment appliquer ce que j'ai appris dans mon travail."))$values),NA,filter(data_participants[[i]], questions %in% c("Les activités et les exercices utilisés par les formateurs et formatrices me permettent de voir comment appliquer ce que j'ai appris dans mon travail."))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("J'ai apprécié l'engagement des formateurs et formatrices - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("J'ai apprécié l'engagement des formateurs et formatrices - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Les activités et les exercices utilisés par les formateurs et formatrices me permettent de voir comment appliquer ce que j'ai appris dans mon travail. - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("Les activités et les exercices utilisés par les formateurs et formatrices me permettent de voir comment appliquer ce que j'ai appris dans mon travail. - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Pratiques numérique\", je sais... - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Pratiques numérique\", je sais... - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin des ateliers de sciences informatiques \"Algorithmes divers\" et \"Scratch Jr\", je sais... - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin des ateliers de sciences informatiques \"Algorithmes divers\" et \"Scratch Jr\", je sais... - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Partage\", je sais... - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Partage\", je sais... - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Other"))$values),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Other"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Pratiques numériques"))$values),NA,filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Pratiques numériques"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Algorithmes divers"))$values),NA,filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Algorithmes divers"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Partages et droits"))$values),NA,filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Partages et droits"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Scratch Junior"))$values),NA,filter(data_participants[[i]], questions %in% c("J'ai eu beaucoup de plaisir à suivre les ateliers suivants - Scratch Junior"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Pratiques numériques"))$values),NA,filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Pratiques numériques"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Algorithmes divers"))$values),NA,filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Algorithmes divers"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Partages et droits"))$values),NA,filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Partages et droits"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Scratch Junior"))$values),NA,filter(data_participants[[i]], questions %in% c("Ma participation aux ateliers suivants est très utile pour mon travail. - Scratch Junior"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Pratiques numériques"))$values),NA,filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Pratiques numériques"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Algorithmes divers"))$values),NA,filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Algorithmes divers"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Partages et droits"))$values),NA,filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Partages et droits"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Scratch Junior"))$values),NA,filter(data_participants[[i]], questions %in% c("Je me sens en confiance pour utiliser, dans mon travail, les compétences apprises dans les ateliers suivants - Scratch Junior"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Pratiques numériques"))$values),NA,filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Pratiques numériques"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Algorithmes divers"))$values),NA,filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Algorithmes divers"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Partages et droits"))$values),NA,filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Partages et droits"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Scratch Junior"))$values),NA,filter(data_participants[[i]], questions %in% c("Durant cette année scolaire, j'ai l'intention d'utiliser les ressources et contenus des ateliers suivants - Scratch Junior"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Pratiques numérique\", je sais... - Sélectionner et évaluer des ressources numériques existantes"))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Pratiques numérique\", je sais... - Sélectionner et évaluer des ressources numériques existantes"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Pratiques numérique\", je sais... - Planifier et mettre en oeuvre des ressources numériques variées dans mon enseignement."))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Pratiques numérique\", je sais... - Planifier et mettre en oeuvre des ressources numériques variées dans mon enseignement."))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin des ateliers de sciences informatiques \"Algorithmes divers\" et \"Scratch Jr\", je sais... - Manipuler l’environnement numérique de Scratch junior"))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin des ateliers de sciences informatiques \"Algorithmes divers\" et \"Scratch Jr\", je sais... - Manipuler l’environnement numérique de Scratch junior"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin des ateliers de sciences informatiques \"Algorithmes divers\" et \"Scratch Jr\", je sais... - Définir ce qu’est un algorithme"))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin des ateliers de sciences informatiques \"Algorithmes divers\" et \"Scratch Jr\", je sais... - Définir ce qu’est un algorithme"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin des ateliers de sciences informatiques \"Algorithmes divers\" et \"Scratch Jr\", je sais... - Mettre en oeuvre des activités permettant le développement de compétences de lecture, de compréhension et de production."))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin des ateliers de sciences informatiques \"Algorithmes divers\" et \"Scratch Jr\", je sais... - Mettre en oeuvre des activités permettant le développement de compétences de lecture, de compréhension et de production."))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Partage\", je sais... - Découvrir des activités permettant d’évaluer les impacts sociaux: liberté individuelle, données personnelles"))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Partage\", je sais... - Découvrir des activités permettant d’évaluer les impacts sociaux: liberté individuelle, données personnelles"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Partage\", je sais... - Respecter les règles de confidentialité et de droits d'auteur.e.s"))$values),NA,filter(data_participants[[i]], questions %in% c("A la fin de l'atelier \"Partage\", je sais... - Respecter les règles de confidentialité et de droits d'auteur.e.s"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Les contenus de formation correspondent étroitement à ce qui m'est demandé dans ma pratique d'enseignant.e"))$values),NA,filter(data_participants[[i]], questions %in% c("Les contenus de formation correspondent étroitement à ce qui m'est demandé dans ma pratique d'enseignant.e"))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("J'ai l'impression que plus j'applique les contenus et ressources de la formation dans mon enseignement, mieux je fais mon travail."))$values),NA,filter(data_participants[[i]], questions %in% c("J'ai l'impression que plus j'applique les contenus et ressources de la formation dans mon enseignement, mieux je fais mon travail."))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Mes collègues m'encouragent à utiliser les compétences acquises en formation."))$values),NA,filter(data_participants[[i]], questions %in% c("Mes collègues m'encouragent à utiliser les compétences acquises en formation."))$values),
-                                ifelse(is.null(filter(data_participants[[i]], questions %in% c("Ma charge de travail me laisse le temps d'essayer les nouvelles choses que j'ai apprises."))$values),NA,filter(data_participants[[i]], questions %in% c("Ma charge de travail me laisse le temps d'essayer les nouvelles choses que j'ai apprises."))$values),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - La Charte (vu en J1)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - La Charte (vu en J1)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - BookCreator - le livre multimédia (vu en J1)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - BookCreator - le livre multimédia (vu en J1)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - La Machine à tri (vu en J1)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - La Machine à tri (vu en J1)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Le Jeu du robot (vu en J1)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Le Jeu du robot (vu en J1)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Orchestration et gestion des IPads de la classe (vu en J1)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Orchestration et gestion des IPads de la classe (vu en J1)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Les bestioles (vu en J1)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Les bestioles (vu en J1)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Le robot Thymio (vu en J2)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Le robot Thymio (vu en J2)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Le robot Bluebot (vu en J2)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Le robot Bluebot (vu en J2)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Edunum et différenciation (vu en J2)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Edunum et différenciation (vu en J2)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Utiliser des applications numériques disciplinaires (vu en J3)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Utiliser des applications numériques disciplinaires (vu en J3)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Chope la pub (vu en J3)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Chope la pub (vu en J3)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Où sont les écrans - poster de la ville ? (vu en J3)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Où sont les écrans - poster de la ville ? (vu en J3)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Le tapis des écrans (vu en J2)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Le tapis des écrans (vu en J2)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Stop Motion - film d’animation (vu en J3)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Stop Motion - film d’animation (vu en J3)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Album «Loupé» (vu en J3)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Album «Loupé» (vu en J3)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Album «C’est un livre» (vu en J3)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Album «C’est un livre» (vu en J3)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Album «Pfff» (vu en J2)"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Album «Pfff» (vu en J2)"))$value),
-                                ifelse(identical(filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Pas concerné"))$value, character(0)),NA,filter(data_participants[[i]], questions %in% c("Durant l'année scolaire 2021-2022, je me suis servi des modules de formation suivants pour réaliser des activités avec mes élèves : - Pas concerné"))$value))
-          
-          data[i,] <- row_participant
-        
-        }
-        
-        # Store data
-        
-        saveRDS(data, file = "data_ef_d1_processed.rds")
-        
-      }
-
-      ###################################################  
-      
       output$demoPlot <- renderPlot({
-      
+        
         if (input$demographie == "Age") {
           
           p <- ggplot(data[data$journee==input$journee&data$date==input$session&data$id_binome==input$id,], aes(x=id_binome, y=as.numeric(age))) +
@@ -650,18 +848,18 @@ server <- function(input, output) {
           selection <- data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("degre_1P","degre_2P","degre_3P","degre_4P","degre_5P","degre_6P","degre_7P","degre_8P","degre_9S","degre_10S","degre_11S","degre_12S")]
           
           
-          Freq <- c(sum(!is.na(selection$"degre_1P")),
-                    sum(!is.na(selection$"degre_2P")),
-                    sum(!is.na(selection$"degre_3P")),
-                    sum(!is.na(selection$"degre_4P")),
-                    sum(!is.na(selection$"degre_5P")),
-                    sum(!is.na(selection$"degre_6P")),
-                    sum(!is.na(selection$"degre_7P")),
-                    sum(!is.na(selection$"degre_8P")),
-                    sum(!is.na(selection$"degre_9S")),
-                    sum(!is.na(selection$"degre_10S")),
-                    sum(!is.na(selection$"degre_11S")),
-                    sum(!is.na(selection$"degre_12S")))
+          Freq <- c(sum(as.numeric(selection$"degre_1P")),
+                    sum(as.numeric(selection$"degre_2P")),
+                    sum(as.numeric(selection$"degre_3P")),
+                    sum(as.numeric(selection$"degre_4P")),
+                    sum(as.numeric(selection$"degre_5P")),
+                    sum(as.numeric(selection$"degre_6P")),
+                    sum(as.numeric(selection$"degre_7P")),
+                    sum(as.numeric(selection$"degre_8P")),
+                    sum(as.numeric(selection$"degre_9S")),
+                    sum(as.numeric(selection$"degre_10S")),
+                    sum(as.numeric(selection$"degre_11S")),
+                    sum(as.numeric(selection$"degre_12S")))
           
           degre <-  gsub("degre_\\.*","",colnames(selection))
           
@@ -905,21 +1103,14 @@ server <- function(input, output) {
         if (input$commentaires == "Engagement des formateurs - Commentaires") {
           
           
-          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("engagement_commentaires")]))))
-          
-        }
-        
-        if (input$commentaires == "Engagement des formateurs - Commentaires") {
-          
-          
-          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("engagement_commentaires")]))))
+          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("engagement_formateurs_commentaires")]))))
           
         }
         
         if (input$commentaires == "Lien entre formation et pratique - Commentaires") {
           
           
-          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("liens_formation_pratique_commentaires")]))))
+          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("liens_formation_pratique_commentaire")]))))
           
         }
         
@@ -937,7 +1128,7 @@ server <- function(input, output) {
         
         if (input$commentaires == "Auto-efficacité - Commentaires") {
           
-          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("autoefficacite_activites_commentaires")]))))
+          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("confiance_activites_commentaires")]))))
           
         }
         
@@ -970,7 +1161,7 @@ server <- function(input, output) {
         if (input$commentaires == "Mise en oeuvre des activités - Commentaires") {
           
           
-          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("miseenoeuvre_commentaires")]))))
+          return(datatable(rownames = NULL, colnames = NULL,options = list(dom = 't'),na.omit(data.frame(data=data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("intention_utilisation_commentaires")]))))
           
         }
         
@@ -1226,9 +1417,9 @@ server <- function(input, output) {
         
         if (input$conditionsFacilitantes == "Compatibilité avec les pratiques habituelles") {
           
-          data$compatibilite <- mapping_agreement[data$compatibilite]
+          data$compatibilite <- mapping_agreement[data$conditions_compatibilite]
           
-          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=compatibilite)) +
+          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=conditions_compatibilite)) +
             geom_boxplot(fill='#23AFD6', color="black", alpha=0.7, outlier.shape = NA) +
             geom_jitter(shape=16, size=3, position=position_jitter(width = 0.3, height = 0)) +
             theme_minimal() +
@@ -1259,9 +1450,9 @@ server <- function(input, output) {
         if (input$conditionsFacilitantes == "Plus-value des formations") {
           
           
-          data$plusvalue <- mapping_agreement[data$plusvalue]
+          data$plusvalue <- mapping_agreement[data$conditions_plusvalue]
           
-          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=plusvalue)) +
+          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=conditions_plusvalue)) +
             geom_boxplot(fill='#23AFD6', color="black",alpha=0.7, outlier.shape = NA) +
             geom_jitter(shape=16, size=3, position=position_jitter(width = 0.3, height = 0)) +
             theme_minimal() +
@@ -1291,9 +1482,9 @@ server <- function(input, output) {
         
         if (input$conditionsFacilitantes == "Soutien des collègues") {
           
-          data$soutien <- mapping_agreement[data$soutien]
+          data$soutien <- mapping_agreement[data$conditions_soutien]
           
-          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=soutien)) +
+          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=conditions_soutien)) +
             geom_boxplot(fill='#23AFD6', color="black", alpha=0.7, outlier.shape = NA) +
             geom_jitter(shape=16, size=3, position=position_jitter(width = 0.3, height = 0)) +
             theme_minimal() +
@@ -1324,9 +1515,9 @@ server <- function(input, output) {
         
         if (input$conditionsFacilitantes == "Charge de travail") {
           
-          data$charge <- mapping_agreement[data$charge]
+          data$charge <- mapping_agreement[data$conditions_charge]
           
-          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=charge)) +
+          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=conditions_charge)) +
             geom_boxplot(fill='#23AFD6', color="black", alpha=0.7, outlier.shape = NA) +
             geom_jitter(shape=16, size=3, position=position_jitter(width = 0.3, height = 0)) +
             theme_minimal() +
@@ -1374,43 +1565,46 @@ server <- function(input, output) {
                "Stop Motion - film d’animation (J3)",
                "Album «Loupé» (J3)",
                "Album «C’est un livre» (J3)",
-               "Album «Pfff» (j2)")
+               "Album «Pfff» (j2)",
+               "Pas concerné")
         
-        selection <- data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("charte",
-                                                                                                          "livre",
-                                                                                                          "machine",
-                                                                                                          "jeu",
-                                                                                                          "orchestration",
-                                                                                                          "bestioles",
-                                                                                                          "thymio",
-                                                                                                          "bluebot",
-                                                                                                          "edunum",
-                                                                                                          "utiliser_application",
-                                                                                                          "chope_pub",
-                                                                                                          "ecrans",
-                                                                                                          "tapis",
-                                                                                                          "stopmotion",
-                                                                                                          "album_loupe",
-                                                                                                          "album_livre",
-                                                                                                          "album_pfff")]
+        selection <- data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,c("adoption_charte",
+                                                                                                          "adoption_livre",
+                                                                                                          "adoption_machine",
+                                                                                                          "adoption_jeu",
+                                                                                                          "adoption_orchestration",
+                                                                                                          "adoption_bestioles",
+                                                                                                          "adoption_thymio",
+                                                                                                          "adoption_bluebot",
+                                                                                                          "adoption_edunum",
+                                                                                                          "adoption_utiliser_application",
+                                                                                                          "adoption_chope_pub",
+                                                                                                          "adoption_ecrans",
+                                                                                                          "adoption_tapis",
+                                                                                                          "adoption_stopmotion",
+                                                                                                          "adoption_album_loupe",
+                                                                                                          "adoption_album_livre",
+                                                                                                          "adoption_album_pfff",
+                                                                                                          "adoption_pasconcerne")]
         
-        Freq <- c(sum(!is.na(selection$"charte")),
-                  sum(!is.na(selection$"livre")),
-                  sum(!is.na(selection$"machine")),
-                  sum(!is.na(selection$"jeu")),
-                  sum(!is.na(selection$"orchestration")),
-                  sum(!is.na(selection$"bestioles")),
-                  sum(!is.na(selection$"thymio")),
-                  sum(!is.na(selection$"bluebot")),
-                  sum(!is.na(selection$"edunum")),
-                  sum(!is.na(selection$"utiliser_application")),
-                  sum(!is.na(selection$"chope_pub")),
-                  sum(!is.na(selection$"ecrans")),
-                  sum(!is.na(selection$"tapis")),
-                  sum(!is.na(selection$"stopmotion")),
-                  sum(!is.na(selection$"album_loupe")),
-                  sum(!is.na(selection$"album_livre")),
-                  sum(!is.na(selection$"album_pfff")))
+        Freq <- c(sum(as.numeric(selection$"adoption_charte")),
+                  sum(as.numeric(selection$"adoption_livre")),
+                  sum(as.numeric(selection$"adoption_machine")),
+                  sum(as.numeric(selection$"adoption_jeu")),
+                  sum(as.numeric(selection$"adoption_orchestration")),
+                  sum(as.numeric(selection$"adoption_bestioles")),
+                  sum(as.numeric(selection$"adoption_thymio")),
+                  sum(as.numeric(selection$"adoption_bluebot")),
+                  sum(as.numeric(selection$"adoption_edunum")),
+                  sum(as.numeric(selection$"adoption_utiliser_application")),
+                  sum(as.numeric(selection$"adoption_chope_pub")),
+                  sum(as.numeric(selection$"adoption_ecrans")),
+                  sum(as.numeric(selection$"adoption_tapis")),
+                  sum(as.numeric(selection$"adoption_stopmotion")),
+                  sum(as.numeric(selection$"adoption_album_loupe")),
+                  sum(as.numeric(selection$"adoption_album_livre")),
+                  sum(as.numeric(selection$"adoption_album_pfff")),
+                  sum(as.numeric(selection$"adoption_pasconcerne")))
         
         data_plot <- data.frame(Var1 = x, Freq = Freq)
         #data_plot <- data_plot[!data_plot$Freq==0,]
@@ -1444,6 +1638,5 @@ server <- function(input, output) {
   
   
 }
-
 
 shinyApp(ui = ui, server = server)
