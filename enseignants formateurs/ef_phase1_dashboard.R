@@ -19,16 +19,16 @@ library(ggplot2)
 ################################# DATA COLLECTION VIA SurveyMonkey API #################################
 
 
-sm_api_key = 'cOmUpOXfevWx560egh1njr2VdHlQBpAay26.xBEyidJz6GAapRctumcP0wakhEoKWck.rCm9ilv0T9WvWbFCC28WiiH5Xm6Wi-SsjnPELjqqyZ6WoeEOAg7nLOwE4EWe'
-sm_secret = '242165516931955153453450636525599903801'
-sm_client_id = '_Sb_Cqc5RmSDBf7aKt77vQ'
+sm_api_key = ''
+sm_secret = ''
+sm_client_id = ''
 
-survey_id <- "508351659"
+survey_id <- ""
 
 details <- paste0("https://api.surveymonkey.com/v3/surveys/",survey_id)
 content_details <- content(GET(details,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")
 
-collector <- "447634539"
+collector <- ""
 collector <- paste0("https://api.surveymonkey.com/v3/collectors/",collector)
 
 #######################  FIND SURVEYS AND COLLECTORS IDS ################
