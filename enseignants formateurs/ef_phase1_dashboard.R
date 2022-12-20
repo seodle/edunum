@@ -12,8 +12,6 @@ library(curl)
 library(RColorBrewer)
 library(scales)
 library(ggplot2)
-library(scales)
-library(ggplot2)
 
 
 ################################# DATA COLLECTION VIA SurveyMonkey API #################################
@@ -72,9 +70,9 @@ collector <- paste0("https://api.surveymonkey.com/v3/collectors/",collector)
 
 # Load the data if some already stored
 
-if (file.exists("data_ef_d1.rds")){
+if (file.exists("data_ef_d1_random.rds")){
   
-  data <- readRDS(file = "data_ef_d1.rds")
+  data <- readRDS(file = "data_ef_d1_random.rds")
   
 } else {
   
@@ -87,503 +85,503 @@ if (file.exists("data_ef_d1.rds")){
 # The API provides the data by batch of 50 responses. If there is new responses, 
 # the number of responses is strictly superior to nrow(data) 
 
-if (content_details$response_count > nrow(data)) {
-  
-  data <- head(data,-(nrow(data) %% 50)) # Remove the last incomplete batch from the data
-  
-  #day <- str_sub(content(GET(collector,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")$url, -2, -1)
-  
-  pages <- (nrow(data) %/% 50 + 1):(content_details$response_count %/% 50 + 1) # Return the range of batches to be added to stored data
-  
-  responses_urls <- lapply(pages, function(x) {paste0("https://api.surveymonkey.com/v3/surveys/",survey_id,"/responses/bulk?simple=true&per_page=50&page=",x)}) # Return the urls of the bachtes of interest
-  
-  content_responses <- list()
-  
-  ## For each batch, a API call is made to get the data and stored in content_responses
-  
-  for (i in 1:length(responses_urls)) {
-    
-    content_responses <- append(content_responses,list(content(GET(responses_urls[[i]],add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")))
-    
-  }
-  
-  # Questions
-  
-  columns <- c("journee",
-               "date",
-               "id_binome",
-               "age",
-               "experience",
-               "etablissement",
-               "degre_1P",
-               "degre_2P",
-               "degre_3P",
-               "degre_4P",
-               "degre_5P",
-               "degre_6P",
-               "degre_7P",
-               "degre_8P",
-               "degre_9S",
-               "degre_10S",
-               "degre_11S",
-               "degre_12S",
-               "motivation",
-               "utilite_techno",
-               "contenu_riche",
-               "contenu_adapte",
-               "appreciation_generale_commentaires",
-               "engagement_formateurs",
-               "engagement_formateurs_commentaires",
-               "liens_formation_pratique",
-               "liens_formation_pratique_commentaire",
-               "interet_pratiques",
-               "interet_algorithmes",
-               "interet_partages",
-               "interet_scratch",
-               "interet_activites_commentaires",
-               "utilite_pratiques",
-               "utilite_algorithmes",
-               "utilite_partages",
-               "utilite_scratch",
-               "utilite_activites_commentaires",
-               "confiance_pratiques",
-               "confiance_algorithmes",
-               "confiance_partages",
-               "confiance_scratch",
-               "confiance_activites_commentaires",
-               "competence1",
-               "competence2",
-               "acquisition_pratiques_commentaires",
-               "competence3",
-               "competence4",
-               "competence5",
-               "acquisition_algorithmes_commentaires",
-               "competence6",
-               "competence7",
-               "acquisition_partage_commentaires",
-               "utiliser_nouveaux_apprentissages",
-               "intention_pratiques",
-               "intention_algorithmes",
-               "intention_partages",
-               "intention_scratch",
-               "intention_utilisation_commentaires",
-               "adoption_charte",
-               "adoption_livre",
-               "adoption_machine",
-               "adoption_jeu",
-               "adoption_orchestration",
-               "adoption_bestioles",
-               "adoption_thymio",
-               "adoption_bluebot",
-               "adoption_edunum",
-               "adoption_utiliser_application",
-               "adoption_chope_pub",
-               "adoption_ecrans",
-               "adoption_tapis",
-               "adoption_stopmotion",
-               "adoption_album_loupe",
-               "adoption_album_livre",
-               "adoption_album_pfff",
-               "adoption_pasconcerne",
-               "conditions_compatibilite",
-               "conditions_soutien",
-               "conditions_charge",
-               "conditions_plusvalue")
-  
-  # Réponses 
-  
-  table <- NULL
-  cycles <- rep(0, 12)
-  activites <-  rep(0,18)
-  n_batch <- NULL
-  
-  for (n_batch in 1:length(content_responses)) {
-    
-    vec <- 1:length(content_responses[[n_batch]]$data)
-    
-    for (i in vec) {
-      
-      answers <- c(
-        
-        "J4",
-        
-        tryCatch(
-        content_responses[[n_batch]]$data[[i]]$date_created,
-        error = function(e){return(NA)}
-      ),
-      
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$custom_variables$EF,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q22 Age
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[2]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q23 Expérience
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[3]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q2 Etablissement
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[2]]$questions[[2]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q21 Degrés
-      
-      if("try-error" %in% class(try(length(content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers)))) {
-        
-        cycles <- rep(0,12)
-        
-      } 
-      
-      else {
-        
-        for (j in 1:length(content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers)){
-          
-          n <- as.numeric(gsub("([0-9]+).*$", "\\1", content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers[[j]]$simple_text))
-          
-          cycles[n] <- cycles[n] + 1
-
-        }
-        
-        cycles
-        
-      },
-      
-      #Q3 Motivation
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[1]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q4 Utilité techno
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[2]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q5 Contenu riche
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[1]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q5 Contenu adapté
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[2]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q5 Appreciation générale commentaires
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[3]]$text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q6 Engagement formateurs
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q6 Engagement formateurs commentaires
-    
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[2]]$text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q7 Liens formation pratique
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[2]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q7 Liens formation pratique commentaires
-      
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[2]]$answers[[2]]$text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q8 Plaisir pratiques numériques
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[1]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q8 Plaisir algorithmes divers
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[2]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q8 Plaisir partages et droits
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[3]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q8 Plaisir scratch junior
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[4]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q8 Intéret activités commentaire
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[5]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q9 Utilite pratiques numeriques
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[1]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      #Q9 Utilite algorithmes divers
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[2]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q9 Utilite partages et droits
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[3]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q9 Utilite scratch junior
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[4]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q9 Utilite activites commentaires
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[5]]$text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q10 Confiance pratiques numeriques
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[1]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      #Q10 Confiance algorithmes divers
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[2]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q10 Confiance partages et droits
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[3]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q10 Confiance scratch junior
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[4]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q10 Confiance activites commentaires
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[5]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q11 Competence 1 pratiques numériques
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[1]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q11 Competence 2 pratiques numériques
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[2]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q11 Acquisition pratiques commentaires
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[3]]$text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q12 Competence 3 Algortithmes divers
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[1]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q12 Competence 4 Algortithmes divers
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[2]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q12 Competence 5 Algortithmes divers
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[3]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q12 Acquisition Algortithmes divers commentaire
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[4]]$text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q13 Competence 6 Partage
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[1]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q13 Competence 7 Partage
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[2]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q13 Acquisition Partage Commentaire
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[3]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      
-      #Q14 Utiliser nouveaux apprentissages
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[1]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q15 Intention pratiques
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[1]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q15 Intention algorithmes
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[2]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q15 Intention partage
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[3]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q15 Intention scratch
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[4]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q15 Intention utilisation commentaires
-      tryCatch(
-        gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[5]]$simple_text),
-        error = function(e){return(NA)}
-      ),
-      
-      #Q16 Adoption
-      
-      if("try-error" %in% class(try(length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)))) {
-        
-        activites <- rep(0,18)
-        
-      } 
-      
-      else {
-        
-        for (j in 1:length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)){
-          
-          n <- content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers[[j]]$simple_text
-          n <- case_when(n == "La Charte (vu en J1)" ~ 1,
-                         n == "BookCreator - le livre multimédia (vu en J1)" ~ 2,
-                         n == "La Machine à tri (vu en J1)" ~ 3,
-                         n == "Le Jeu du robot (vu en J1)" ~ 4,
-                         n == "Orchestration et gestion des IPads de la classe (vu en J1)" ~ 5,
-                         n == "Les bestioles (vu en J1)" ~ 6,
-                         n == "Le robot Thymio (vu en J2)" ~ 7,
-                         n == "Le robot Bluebot (vu en J2)" ~ 8,
-                         n == "Edunum et différenciation (vu en J2)" ~ 9,
-                         n == "Utiliser des applications numériques disciplinaires (vu en J3)" ~ 10,
-                         n == "Chope la pub (vu en J3)" ~ 11,
-                         n == "Où sont les écrans - poster de la ville ? (vu en J3)" ~ 12,
-                         n == "Le tapis des écrans (vu en J2)" ~ 13,
-                         n == "Stop Motion - film d’animation (vu en J3)" ~ 14,
-                         n == "Album «Loupé» (vu en J3)" ~ 15,
-                         n == "Album «C’est un livre» (vu en J3)" ~ 16,
-                         n == "Album «Pfff» (vu en J2)" ~ 17,
-                         n == "Pas concerné" ~ 18)
-          
-          activites[n] <- activites[n] + 1
-          
-        }
-        
-        activites
-        
-      },
-      
-      #Q17 Conditions compatibilite
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[1]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q18 Conditions soutien
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[2]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q19 Conditions charge
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[3]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ),
-      
-      #Q20 Conditions plusvalue
-      tryCatch(
-        content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[4]]$answers[[1]]$simple_text,
-        error = function(e){return(NA)}
-      ))
-      
-      cycles <- rep(0, 12)
-      activites <- rep(0,18)
-      table <- rbind(table,answers)
-      
-    }
-    
-  }
-  
-  new_data <- as.data.frame(table)
-  colnames(new_data) <- columns
-  new_data$date <- substring(new_data$date,0,10)
-  data <- rbind(data,new_data)
-  rownames(data) <- 1:nrow(data)
-  
-  # Store updated data
-  
-  saveRDS(data, file = "data_ef_d1.rds")
-  
-} else {
-  
-  cat("Pas de nouvelles données trouvées sur SurveyMonkey")
-}
+# if (content_details$response_count > nrow(data)) {
+#   
+#   data <- head(data,-(nrow(data) %% 50)) # Remove the last incomplete batch from the data
+#   
+#   #day <- str_sub(content(GET(collector,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")$url, -2, -1)
+#   
+#   pages <- (nrow(data) %/% 50 + 1):(content_details$response_count %/% 50 + 1) # Return the range of batches to be added to stored data
+#   
+#   responses_urls <- lapply(pages, function(x) {paste0("https://api.surveymonkey.com/v3/surveys/",survey_id,"/responses/bulk?simple=true&per_page=50&page=",x)}) # Return the urls of the bachtes of interest
+#   
+#   content_responses <- list()
+#   
+#   ## For each batch, a API call is made to get the data and stored in content_responses
+#   
+#   for (i in 1:length(responses_urls)) {
+#     
+#     content_responses <- append(content_responses,list(content(GET(responses_urls[[i]],add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")))
+#     
+#   }
+#   
+#   # Questions
+#   
+#   columns <- c("journee",
+#                "date",
+#                "id_binome",
+#                "age",
+#                "experience",
+#                "etablissement",
+#                "degre_1P",
+#                "degre_2P",
+#                "degre_3P",
+#                "degre_4P",
+#                "degre_5P",
+#                "degre_6P",
+#                "degre_7P",
+#                "degre_8P",
+#                "degre_9S",
+#                "degre_10S",
+#                "degre_11S",
+#                "degre_12S",
+#                "motivation",
+#                "utilite_techno",
+#                "contenu_riche",
+#                "contenu_adapte",
+#                "appreciation_generale_commentaires",
+#                "engagement_formateurs",
+#                "engagement_formateurs_commentaires",
+#                "liens_formation_pratique",
+#                "liens_formation_pratique_commentaire",
+#                "interet_pratiques",
+#                "interet_algorithmes",
+#                "interet_partages",
+#                "interet_scratch",
+#                "interet_activites_commentaires",
+#                "utilite_pratiques",
+#                "utilite_algorithmes",
+#                "utilite_partages",
+#                "utilite_scratch",
+#                "utilite_activites_commentaires",
+#                "confiance_pratiques",
+#                "confiance_algorithmes",
+#                "confiance_partages",
+#                "confiance_scratch",
+#                "confiance_activites_commentaires",
+#                "competence1",
+#                "competence2",
+#                "acquisition_pratiques_commentaires",
+#                "competence3",
+#                "competence4",
+#                "competence5",
+#                "acquisition_algorithmes_commentaires",
+#                "competence6",
+#                "competence7",
+#                "acquisition_partage_commentaires",
+#                "utiliser_nouveaux_apprentissages",
+#                "intention_pratiques",
+#                "intention_algorithmes",
+#                "intention_partages",
+#                "intention_scratch",
+#                "intention_utilisation_commentaires",
+#                "adoption_charte",
+#                "adoption_livre",
+#                "adoption_machine",
+#                "adoption_jeu",
+#                "adoption_orchestration",
+#                "adoption_bestioles",
+#                "adoption_thymio",
+#                "adoption_bluebot",
+#                "adoption_edunum",
+#                "adoption_utiliser_application",
+#                "adoption_chope_pub",
+#                "adoption_ecrans",
+#                "adoption_tapis",
+#                "adoption_stopmotion",
+#                "adoption_album_loupe",
+#                "adoption_album_livre",
+#                "adoption_album_pfff",
+#                "adoption_pasconcerne",
+#                "conditions_compatibilite",
+#                "conditions_soutien",
+#                "conditions_charge",
+#                "conditions_plusvalue")
+#   
+#   # Réponses 
+#   
+#   table <- NULL
+#   cycles <- rep(0, 12)
+#   activites <-  rep(0,18)
+#   n_batch <- NULL
+#   
+#   for (n_batch in 1:length(content_responses)) {
+#     
+#     vec <- 1:length(content_responses[[n_batch]]$data)
+#     
+#     for (i in vec) {
+#       
+#       answers <- c(
+#         
+#         "J4",
+#         
+#         tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$date_created,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$custom_variables$EF,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q22 Age
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[2]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q23 Expérience
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[3]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q2 Etablissement
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[2]]$questions[[2]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q21 Degrés
+#       
+#       if("try-error" %in% class(try(length(content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers)))) {
+#         
+#         cycles <- rep(0,12)
+#         
+#       } 
+#       
+#       else {
+#         
+#         for (j in 1:length(content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers)){
+#           
+#           n <- as.numeric(gsub("([0-9]+).*$", "\\1", content_responses[[n_batch]]$data[[i]]$pages[[13]]$questions[[1]]$answers[[j]]$simple_text))
+#           
+#           cycles[n] <- cycles[n] + 1
+# 
+#         }
+#         
+#         cycles
+#         
+#       },
+#       
+#       #Q3 Motivation
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[1]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q4 Utilité techno
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[3]]$questions[[2]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q5 Contenu riche
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[1]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q5 Contenu adapté
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[2]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q5 Appreciation générale commentaires
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[4]]$questions[[1]]$answers[[3]]$text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q6 Engagement formateurs
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q6 Engagement formateurs commentaires
+#     
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[1]]$answers[[2]]$text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q7 Liens formation pratique
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[2]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q7 Liens formation pratique commentaires
+#       
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[5]]$questions[[2]]$answers[[2]]$text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q8 Plaisir pratiques numériques
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[1]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q8 Plaisir algorithmes divers
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[2]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q8 Plaisir partages et droits
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[3]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q8 Plaisir scratch junior
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[4]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q8 Intéret activités commentaire
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[6]]$questions[[1]]$answers[[5]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q9 Utilite pratiques numeriques
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[1]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       #Q9 Utilite algorithmes divers
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[2]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q9 Utilite partages et droits
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[3]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q9 Utilite scratch junior
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[4]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q9 Utilite activites commentaires
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[7]]$questions[[1]]$answers[[5]]$text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q10 Confiance pratiques numeriques
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[1]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       #Q10 Confiance algorithmes divers
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[2]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q10 Confiance partages et droits
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[3]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q10 Confiance scratch junior
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[4]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q10 Confiance activites commentaires
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[8]]$questions[[1]]$answers[[5]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q11 Competence 1 pratiques numériques
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[1]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q11 Competence 2 pratiques numériques
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[2]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q11 Acquisition pratiques commentaires
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[1]]$answers[[3]]$text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q12 Competence 3 Algortithmes divers
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[1]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q12 Competence 4 Algortithmes divers
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[2]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q12 Competence 5 Algortithmes divers
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[3]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q12 Acquisition Algortithmes divers commentaire
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[2]]$answers[[4]]$text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q13 Competence 6 Partage
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[1]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q13 Competence 7 Partage
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[2]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q13 Acquisition Partage Commentaire
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[9]]$questions[[3]]$answers[[3]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       
+#       #Q14 Utiliser nouveaux apprentissages
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[1]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q15 Intention pratiques
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[1]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q15 Intention algorithmes
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[2]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q15 Intention partage
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[3]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q15 Intention scratch
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[4]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q15 Intention utilisation commentaires
+#       tryCatch(
+#         gsub(".*\\| ","",content_responses[[n_batch]]$data[[i]]$pages[[10]]$questions[[2]]$answers[[5]]$simple_text),
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q16 Adoption
+#       
+#       if("try-error" %in% class(try(length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)))) {
+#         
+#         activites <- rep(0,18)
+#         
+#       } 
+#       
+#       else {
+#         
+#         for (j in 1:length(content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers)){
+#           
+#           n <- content_responses[[n_batch]]$data[[i]]$pages[[11]]$questions[[1]]$answers[[j]]$simple_text
+#           n <- case_when(n == "La Charte (vu en J1)" ~ 1,
+#                          n == "BookCreator - le livre multimédia (vu en J1)" ~ 2,
+#                          n == "La Machine à tri (vu en J1)" ~ 3,
+#                          n == "Le Jeu du robot (vu en J1)" ~ 4,
+#                          n == "Orchestration et gestion des IPads de la classe (vu en J1)" ~ 5,
+#                          n == "Les bestioles (vu en J1)" ~ 6,
+#                          n == "Le robot Thymio (vu en J2)" ~ 7,
+#                          n == "Le robot Bluebot (vu en J2)" ~ 8,
+#                          n == "Edunum et différenciation (vu en J2)" ~ 9,
+#                          n == "Utiliser des applications numériques disciplinaires (vu en J3)" ~ 10,
+#                          n == "Chope la pub (vu en J3)" ~ 11,
+#                          n == "Où sont les écrans - poster de la ville ? (vu en J3)" ~ 12,
+#                          n == "Le tapis des écrans (vu en J2)" ~ 13,
+#                          n == "Stop Motion - film d’animation (vu en J3)" ~ 14,
+#                          n == "Album «Loupé» (vu en J3)" ~ 15,
+#                          n == "Album «C’est un livre» (vu en J3)" ~ 16,
+#                          n == "Album «Pfff» (vu en J2)" ~ 17,
+#                          n == "Pas concerné" ~ 18)
+#           
+#           activites[n] <- activites[n] + 1
+#           
+#         }
+#         
+#         activites
+#         
+#       },
+#       
+#       #Q17 Conditions compatibilite
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[1]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q18 Conditions soutien
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[2]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q19 Conditions charge
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[3]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ),
+#       
+#       #Q20 Conditions plusvalue
+#       tryCatch(
+#         content_responses[[n_batch]]$data[[i]]$pages[[12]]$questions[[4]]$answers[[1]]$simple_text,
+#         error = function(e){return(NA)}
+#       ))
+#       
+#       cycles <- rep(0, 12)
+#       activites <- rep(0,18)
+#       table <- rbind(table,answers)
+#       
+#     }
+#     
+#   }
+#   
+#   new_data <- as.data.frame(table)
+#   colnames(new_data) <- columns
+#   new_data$date <- substring(new_data$date,0,10)
+#   data <- rbind(data,new_data)
+#   rownames(data) <- 1:nrow(data)
+#   
+#   # Store updated data
+#   
+#   saveRDS(data, file = "data_ef_d1_random.rds")
+#   
+# } else {
+#   
+#   cat("Pas de nouvelles données trouvées sur SurveyMonkey")
+# }
 
 mapping_agreement <- c("Pas du tout d'accord"=1,
                        "Pas d'accord"=2,
@@ -758,12 +756,26 @@ server <- function(input, output) {
   
   observe({
     
-    if (input$id %in% c("031oftw",
-                        "jv3kmdz",
-                        "g6l4gur",
-                        "tbu0m9c",
-                        "9kdg8oi",
-                        "0c0m5dc")) {
+    if (input$id %in% c("5090on3",
+                        "6ev1wd5",
+                        "bsay5t9",
+                        "34vnyfj",
+                        "xt8tb0u",
+                        "4d9ug6k",
+                        "ug8a6dr",
+                        "z9jza5v",
+                        "zoehjqg",
+                        "6hz3qkm",
+                        "hg0ybjf",
+                        "3yufg4t",
+                        "svx837j",
+                        "40aw4kh",
+                        "s1v9vnj",
+                        "p2jie1k",
+                        "omos3ix",
+                        "2l0xtqz",
+                        "43omp4v",
+                        "8c4kpz3")) {
       
       output$demoPlot <- renderPlot({
         
