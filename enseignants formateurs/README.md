@@ -2,7 +2,7 @@
 
 ## Fonctionnement général
 
-Les tableaux de bord "enseignants-formateurs" permettent de disposer d'un retour en temps réel de sondages SurveyMonkey. 
+Les tableaux de bord "enseignants-formateurs" sont des applications R Shiny interactives permettent de disposer d'un retour en temps réel de sondages SurveyMonkey. 
 
 ## Mise en marche rapide
 
