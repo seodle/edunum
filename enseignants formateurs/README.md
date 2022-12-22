@@ -71,7 +71,7 @@ surveys # Display a data frame with all the surveys and the associated urls (mor
 
 # Get the collectors for a given survey
 
-survey_id <- "508351659" # Indicate here your survey id
+survey_id <- "" # Indicate here your survey id
 
 collectors <-paste0("https://api.surveymonkey.com/v3/surveys/",survey_id,"/collectors")
 content_collectors <- content(GET(collectors,add_headers(Authorization = paste0("Bearer ", sm_api_key))),"parsed")
