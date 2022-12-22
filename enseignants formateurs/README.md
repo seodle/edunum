@@ -32,7 +32,7 @@ Pour se connecter à l'API, vous devez récupérer les identifiants de votre app
 
 ## Trouver les identifiants de votre sondage et votre collecteur
 
-Votre sondage SurveyMonkey possède un id spécifique. Votre sondage possède aussi un ou plusieurs collecteurs. Chaque collecteur possède également un id spécifique. Pour récupérer ces id, lancer la partie du script mis en commentaire FIND SURVEYS AND COLLECTOR IDS
+Une fois votre sondage SurveyMonkey créé et ouvert, il possède un id spécifique ainsi qu'un ou plusieurs collecteurs. Chaque collecteur possède également un id spécifique. Pour récupérer ces id, lancer la partie du script mis en commentaire FIND SURVEYS AND COLLECTOR IDS
 
 ```R
 #######################  FIND SURVEYS AND COLLECTORS IDS  ################
