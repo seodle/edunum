@@ -12,7 +12,7 @@ Télécharger le tableau de bord de votre choix (ef_phase1_dashboard.R ou ef_pha
 
 ## Fonctionnement détaillé
 
-### ef_phase1_dahsboard.R
+### ef_phase1_dashboard.R
 
 Le tableau de bord accède directement aux données d'un sondage SurveyMonkey réalisé préalablement (voir survey_ef_d1.pdf).
 
@@ -83,4 +83,4 @@ content_collectors$data[[1]]$id  # the id of the first collector of your survey
 ```
 
 
-### ef_phase1_dahsboard.R
+### ef_phase1_dashboard.R
