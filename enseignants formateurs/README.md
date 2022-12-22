@@ -18,7 +18,7 @@ Le tableau de bord accède directement aux données d'un sondage SurveyMonkey r�
 
 Lorsque lancé, le tableau de bord met à jour via l'API de SurveyMonkey les données récoltés. Ces données sont stockés dans un fichier data_ef_d1.rds lu et mis à jour par l'application. 
 
-Pour faire tourner l'application avec des données réelles, vous pouvez donc remplacer dans le script le nom data_ef_d1_random (données fictives) par data_ef_d1. 
+Pour faire tourner l'application avec des données réelles, vous pouvez donc remplacer dans le script le nom *data_ef_d1_random* (données fictives) par *data_ef_d1*. 
 
 ## Accès à l'API de SurveyMonkey
 
@@ -90,7 +90,7 @@ content_collectors$data[[1]]$id  # the id of the first collector of your survey
 
 ## Mettre en ligne l'application
 
-L'application peut fonctionner en local et online. Pour la rendre disponible online, la solution la plus simple est de l'uploader sur la plateforme https://www.shinyapps.io. Pour cela, dans R Studio, cliquer sur le bouton bleu *Publish options* à côté du bouton Run app. Cliquez sur Add New Account puis ShinyApps.io puis suivre la procédure indiquée. Une fois le compte ajouté, sélectionnez le fichier ef_phase1_dashboard.R. Si vous avez déjà enregistrer une partie des données localement, ajoutez également le fichier data_ef_d1.rds. Donnez un titre à votre application et cliquez sur Publish. Par défaut l'application s'ouvre lorsque la compilation est terminée. 
+L'application peut fonctionner en local et en ligne. Pour la rendre disponible en ligne, la solution la plus simple est de la télécharger sur la plateforme https://www.shinyapps.io. Pour cela, dans R Studio, cliquer sur le bouton bleu *Publish options* à côté du bouton Run app. Cliquez sur Add New Account puis ShinyApps.io puis suivre la procédure indiquée. Une fois le compte ajouté, sélectionnez le fichier ef_phase1_dashboard.R. Si vous avez déjà enregistrer une partie des données localement, ajoutez également le fichier data_ef_d1.rds. Donnez un titre à votre application et cliquez sur Publish. Par défaut l'application s'ouvre lorsque la compilation est terminée. 
 
 
 ### ef_phase2_dashboard.R
