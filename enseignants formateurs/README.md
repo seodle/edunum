@@ -90,7 +90,7 @@ content_collectors$data[[1]]$id  # the id of the first collector of your survey
 
 ## Mettre en ligne l'application
 
-L'application peut fonctionner en local et en ligne. Pour la rendre disponible en ligne, la solution la plus simple est de la télécharger sur la plateforme https://www.shinyapps.io. Pour cela, dans R Studio, cliquer sur le bouton bleu *Publish options* à côté du bouton Run app. Cliquez sur Add New Account puis ShinyApps.io puis suivre la procédure indiquée. Une fois le compte ajouté, sélectionnez le fichier ef_phase1_dashboard.R. Si vous avez déjà enregistrer une partie des données localement, ajoutez également le fichier data_ef_d1.rds. Donnez un titre à votre application et cliquez sur Publish. Par défaut l'application s'ouvre lorsque la compilation est terminée. 
+L'application peut fonctionner en local et en ligne. Pour la rendre disponible en ligne, la solution la plus simple est de la télécharger sur la plateforme https://www.shinyapps.io. Pour cela, dans R Studio, cliquer sur le bouton bleu *Publish options* à côté du bouton Run app. Cliquez sur Add New Account puis ShinyApps.io puis suivre la procédure indiquée. Une fois le compte ajouté, sélectionnez le fichier ef_phase1_dashboard.R. Si vous avez déjà enregistrer une partie des données localement, ajoutez également le fichier data_ef_d1.rds. Donnez un titre à votre application et cliquez sur Publish. Par défaut, l'application s'ouvre dans votre navigateur par défaut lorsque la compilation est terminée. 
 
 
 ### ef_phase2_dashboard.R
