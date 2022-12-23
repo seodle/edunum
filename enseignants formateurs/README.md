@@ -46,7 +46,7 @@ observe({
 
 Le tableau de bord accède directement aux données d'un sondage SurveyMonkey réalisé préalablement (voir survey_ef_d1.pdf).
 
-Lorsque lancé, le tableau de bord met à jour via l'API de SurveyMonkey les données récoltés. Ces données sont stockés dans un fichier data_ef_d1.rds lu et mis à jour par l'application. 
+Lorsque lancé, le tableau de bord met à jour via l'API de SurveyMonkey les données récoltées. Ces données sont stockés dans un fichier data_ef_d1.rds lu et mis à jour par l'application. 
 
 Pour faire tourner l'application avec des données réelles, vous pouvez donc remplacer dans le script le nom *data_ef_d1_random* (données fictives) par *data_ef_d1*. 
 
