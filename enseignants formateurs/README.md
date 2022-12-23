@@ -226,11 +226,11 @@ content_responses[[n_batch]]$data[[i]]$pages[[1]]$questions[[2]]$answers[[3]]$si
 
 ```
 
-n_batch correspond à quel batch de questions on accède (un batch correspond aux réponses de 50 participants dans SurveyMonkey) 
-i est l'indice du participant  
-1 est l'indice de la page choisie dans le sondage 
-2 est l'indice de la question choisie dans le sondage 
-3 est l'indice de la réponse choisie pour la question 2 
+n_batch correspond à quel batch de questions on accède (un batch correspond aux réponses de 50 participants dans SurveyMonkey)   
+i est l'indice du participant    
+1 est l'indice de la page choisie dans le sondage    
+2 est l'indice de la question choisie dans le sondage    
+3 est l'indice de la réponse choisie pour la question 2    
 
 Le commentaire inclu dans la question est la dernière *answers*.
 
