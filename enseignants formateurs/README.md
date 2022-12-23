@@ -236,7 +236,7 @@ Le commentaire inclu dans la question sont la dernière answers.
 
 Selon vos questions et leurs types, il faut faire correspondre la réponse obtenue par l'accès à la liste content_responses à vos noms de colonnes (voir partie précédentes).
 
-Dans l'API de SurveyMonkey, les questions n'ayant pas obtenues de réponses ne sont pas enregistées en tant que NA. L'accès n'existe simplement pas et la tentative d'accès renvoie une erreur. Pour remplacer cette erreur par une valeur NA, chaque accès à la liste content_responses est entourée d'un try-catch retournant la valeur NA lorsque l'accès n'existe pas. 
+Dans l'API de SurveyMonkey, les questions n'ayant pas obtenues de réponses ne sont pas enregistrées en tant que NA. L'accès n'existe simplement pas et la tentative d'accès renvoie une erreur. Pour remplacer cette erreur par une valeur NA, chaque accès à la liste content_responses est entourée d'un try-catch retournant la valeur NA lorsque l'accès n'existe pas. 
 
 ```R
 tryCatch(
@@ -248,7 +248,33 @@ tryCatch(
 Dans cette exemple, l'accès à content_responses renvoie la réponse 1 pour la question 2 du sondage : Dans quel établissement enseignez-vous? correspond à la colonne "etablissement" dans ci-dessus. 
 
 
+### Construction des graphiques
 
+Les représentations graphiques prennent en entrée une partie des données du data frame *data* correspond aux choix réalisé par l'utilisateur (identifiant EF, journée en question, etc.) et les valeurs pour les ou les colonnes sélectionnées (par exemple la colonne experience du data frame *data* correspond ici au nombre d'années d'expérience des enseignants formées).
+
+```R
+
+if (input$demographie == "Experience d'enseignement") {
+          
+          p <- ggplot(data[data$id_binome==input$id&data$journee==input$journee&data$date==input$session,], aes(x=id_binome, y=as.numeric(experience)))  +
+            geom_boxplot(fill='#F59138', color="black", alpha=0.7, outlier.shape = NA) +
+            geom_jitter(shape=16, size=3, position=position_jitter(width = 0.3, height = 0)) +
+            ggtitle(str_wrap("Répartition des enseignant.e.s par établissement",40)) +
+            theme_minimal() +
+            theme(plot.title.position = "plot",
+                  plot.title = element_text(face = "italic",size = 10),
+                  legend.position = "none",
+                  axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),
+                  axis.text.x = element_blank(),
+                  axis.text.y = element_text(size=16),
+                  #plot.background = element_rect(fill = "#ECF0F5",color = "#ECF0F5"),
+                  #panel.background = element_rect(fill = "#ECF0F5", color = "#ECF0F5"),
+                  panel.grid.major = element_blank(),
+                  panel.grid.minor = element_blank())
+          
+          return(p)
+```
 
 
 ## Mettre en ligne l'application
