@@ -276,7 +276,7 @@ if (input$demographie == "Experience d'enseignement") {
           return(p)
 ```
 
-
+ 
 ## Mettre en ligne l'application
 
 L'application peut fonctionner en local et en ligne. Pour la rendre disponible en ligne, la solution la plus simple est de la télécharger sur la plateforme https://www.shinyapps.io. Pour cela, dans R Studio, cliquer sur le bouton bleu *Publish options* à côté du bouton Run app. Cliquez sur Add New Account puis ShinyApps.io puis suivre la procédure indiquée. Une fois le compte ajouté, sélectionnez le fichier ef_phase1_dashboard.R. Si vous avez déjà enregistré une partie des données localement, ajoutez également le fichier data_ef_d1.rds. Donnez un titre à votre application et cliquez sur Publish. Par défaut, l'application s'ouvre dans votre navigateur par défaut lorsque la compilation est terminée. 
