@@ -234,7 +234,7 @@ i est l'indice du participant
 
 Le commentaire inclu dans la question est la dernière *answers*.
 
-Selon vos questions et leurs types, il faut faire correspondre la réponse obtenue par l'accès à la liste content_responses à vos noms de colonnes (voir partie précédentes).
+Selon vos questions et leurs types, il faut faire correspondre la réponse obtenue via l'accès à la liste *content_responses* à vos noms de colonnes (voir partie précédente).
 
 Dans l'API de SurveyMonkey, les questions n'ayant pas obtenues de réponses ne sont pas enregistrées en tant que NA. L'accès n'existe simplement pas et la tentative d'accès renvoie une erreur. Pour remplacer cette erreur par une valeur NA, chaque accès à la liste content_responses est entourée d'un try-catch retournant la valeur NA lorsque l'accès n'existe pas. 
 
@@ -245,12 +245,11 @@ tryCatch(
        ), 
 ```
 
-Dans cette exemple, l'accès à content_responses renvoie la réponse 1 pour la question 2 du sondage : Dans quel établissement enseignez-vous? correspond à la colonne "etablissement" dans ci-dessus. 
-
+Dans cette exemple, l'accès à *content_responses* renvoie la réponse 1 pour la question 2 du sondage : Dans quel établissement enseignez-vous? correspond à la colonne "etablissement" dans les noms de colonnes (voir partie précédente). 
 
 ### Construction des graphiques
 
-Les représentations graphiques prennent en entrée une partie des données du data frame *data* correspond aux choix réalisé par l'utilisateur (identifiant EF, journée en question, etc.) et les valeurs pour les ou les colonnes sélectionnées (par exemple la colonne experience du data frame *data* correspond ici au nombre d'années d'expérience des enseignants formées).
+Les représentations graphiques prennent en entrée une partie des données du data frame *data* correspond aux choix réalisés par l'utilisateur (identifiant EF, journée en question, etc.) et les valeurs pour la ou les colonnes d'intérêt (par exemple la colonne *experience* du data frame *data* correspond ici au nombre d'années d'expérience des enseignants formées). Cette expérience est représentée graphiquement sous forme de boxplot avec la librarie ggplot2.
 
 ```R
 
