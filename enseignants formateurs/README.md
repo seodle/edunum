@@ -118,7 +118,7 @@ Le script doit être adapté aux questions de votre sondage. Trois types de ques
 
 ### Structure des questions
 
-Lorsque l'application met à jour les données via l'API de SurveyMonkey, les données sont stockées dans un data frame appelé *data* lui-même stockés dans le fichier *data_ef_d1.rds*. Les colonnes de *data* correspondent à une ou plusieurs questions de votre sondage.
+Lorsque l'application met à jour les données via l'API de SurveyMonkey, les données sont stockées dans une liste puis via cette liste est créé un data frame appelé *data* enregistré dans le fichier *data_ef_d1.rds*. Les colonnes de *data* correspondent à une ou plusieurs questions de votre sondage.
 
 Dans SurveyMonkey, chaque valeur des questions de type *case à cocher* (plusieurs valeurs peuvent être sélectionnées) possède une colonne spécfique. Par exemple, pour la question 2 (voir survey_ef_d1.pdf) *Dans quel établissement enseignez-vous?, les répondants peuvent indiqués 1 ou plusieurs degrés (de 1P à 12S) (voir code ci-dessous).
 
