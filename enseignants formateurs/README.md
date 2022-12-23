@@ -249,7 +249,7 @@ Dans cette exemple, l'accès à *content_responses* renvoie la réponse 1 pour l
 
 ### Construction des graphiques
 
-Les représentations graphiques prennent en entrée une partie des données du data frame *data* correspond aux choix réalisés par l'utilisateur (identifiant EF, journée en question, etc.) et les valeurs pour la ou les colonnes d'intérêt (par exemple la colonne *experience* du data frame *data* correspond ici au nombre d'années d'expérience des enseignants formées). Cette expérience est représentée graphiquement sous forme de boxplot avec la librarie ggplot2.
+Les représentations graphiques prennent en entrée une partie des données du data frame *data* correspond aux choix réalisés par l'utilisateur (identifiant EF, journée en question, etc.) et les valeurs pour la ou les colonnes d'intérêt (par exemple la colonne *experience* du data frame *data* correspond ici au nombre d'années d'expérience des enseignants formées). Cette variable *experience* est représentée graphiquement sous forme de boxplot avec la librarie ggplot2.
 
 ```R
 
