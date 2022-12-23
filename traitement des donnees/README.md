@@ -6,6 +6,10 @@ Le tableau de bord "traitement des données" est une application R Shiny interac
 
 ![alt text](screenshot_traitement_donnees.png)
 
-## Marche à suivre pour utiliser les tableaux de bord
+## Marche à suivre pour utiliser le tableau de bord
 
 ### Fonctionnement détaillé
+
+#### Téléchargement des données brutes sur SurveyMonkey
+
+
