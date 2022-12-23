@@ -8,7 +8,7 @@ Les tableaux de bord "enseignants-formateurs" sont des applications R Shiny inte
 
 ## Mise en marche rapide
 
-Télécharger le tableau de bord de votre choix (ef_phase1_dashboard.R ou ef_phase2_dashboard.R) dans R Studio et les données fictives qui s'y rapportent (data_ef_d1_random.rds ou data_ef_d2_random.rds). Placer le script et les données dans un même fichier. Lancer le tableau de bord avec R Studio. Indiquez un identifiant EF, correspondant à un code unique donné aux enseignants formateurs pour accéder à leur données uniquement. La liste des identifiants est présente dans le script :
+Télécharger le tableau de bord de votre choix (ef_phase1_dashboard.R ou ef_phase2_dashboard.R) dans R Studio et les données fictives qui s'y rapportent (data_ef_d1_random.rds ou data_ef_d2_random.rds). Placer le script et les données dans un même fichier. Lancer le tableau de bord avec R Studio. Indiquez un identifiant EF, correspondant à un code unique donné à un binôme d'enseignants formateurs pour accéder à leur données uniquement. La liste des identifiants est présente dans le script :
 
 ```R
 
