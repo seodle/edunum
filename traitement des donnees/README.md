@@ -26,10 +26,13 @@ Il peut être intéressant de conserver également une copie .pdf du sondage. Po
 
 Ouvrir le fichier processing-dashboard.R. Cliquez sur Run App. L'application s'ouvre dans votre navigateur par défaut. 
 
-Cliquez sur Browse... sous Charger le fichier CSV brut:. Sélectionner votre fichier *textual_data.csv* puis cliquez sur Ouvrir. Un tableau s'affiche contenant une colonne intitulée Colonnes brutes et une autre intitulée Colonnes renommées. La colonne Colonnes brutes contient les intitulés des questions du sondage SurveyMonkey. Pour faciliter l'analyse des données, ces noms doivent être renommés plus simplement selon la nomenclature de votre choix. 
+Cliquez sur Browse... sous Charger le fichier CSV brut:. Sélectionner votre fichier *textual_data.csv* puis cliquez sur Ouvrir. Un tableau s'affiche contenant une colonne intitulée Colonnes brutes et une autre intitulée Colonnes renommées. La colonne Colonnes brutes contient les intitulés des questions du sondage SurveyMonkey. Les questions de type à cocher possède une colonne par case à cocher appartenant à la même question. 
 
+Il est possible de supprimer certaines colonnes en les sélectionnant et en cliquant sur Supprimez les colonnes inutiles tout en bas de la page. 
 
+Pour faciliter l'analyse des données, ces noms doivent être renommés plus simplement selon la nomenclature de votre choix. Pour renommer une colonne, double cliquez dans la colonne Colonnes renommées en face de l'intitulé que vous souhaitez renommer.
 
+Une fois toutes les colonnes renommées, vous pouvez télécharger un codebook conservant ce tableau. Pour cela, cliquez sur Télécharger le codebook et choisissez le format de sortie souhaité. Enfin, cliquez en bas de la page sur Télécharger le fichier renommé. Un fichier .csv intitulé renamed.csv dans est sauvegardé dans le même dossier que le fichier processing-dashboard.R. 
 
 
 
