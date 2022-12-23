@@ -18,13 +18,17 @@ Dans SurveyMonkey, allez dans Analysez les résultats puis Enregistrer sous -> F
   <img src="https://i.imgur.com/mmIrvC5.png" alt="" width="500"/>
 </center>
 
-Un fenêtre s'affiche. Cliquez sur le bouton Télécharger, un fichier intitulé Données_Tous_XXXXXX.zip se télécharge. Décompressez ce fichier et ne conservez que le fichier .csv portant comme nom l'intitulé du sondage. Renommez-le textual_data.csv.
+Un fenêtre s'affiche. Cliquez sur le bouton Télécharger, un fichier intitulé Données_Tous_XXXXXX.zip se télécharge. Décompressez ce fichier et ne conservez que le fichier .csv portant comme nom l'intitulé du sondage. Renommez-le *textual_data.csv*.
 
 Il peut être intéressant de conserver également une copie .pdf du sondage. Pour ce faire allez dans Concevez un sondage et cliquez sur l'icône d'impression en bas à gauche. Définissez les options de votre choix et cliquez sur le bouton Télécharger le PDF.
 
 #### Lancer le tableau de bord
 
-Ouvrir le fichier 
+Ouvrir le fichier processing-dashboard.R. Cliquez sur Run App. L'application s'ouvre dans votre navigateur par défaut. 
+
+Cliquez sur Browse... sous Charger le fichier CSV brut:. Sélectionner votre fichier *textual_data.csv* puis cliquez sur Ouvrir. Un tableau s'affiche contenant une colonne intitulée Colonnes brutes et une autre intitulée Colonnes renommées. La colonne Colonnes brutes contient les intitulés des questions du sondage SurveyMonkey. Pour faciliter l'analyse des données, ces noms doivent être renommés plus simplement selon la nomenclature de votre choix. 
+
+
 
 
 
