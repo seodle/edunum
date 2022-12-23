@@ -232,7 +232,7 @@ i est l'indice du participant
 2 est l'indice de la question dans le sondage
 3 est l'indice de la réponses à la question
 
-Le commentaire inclu dans la question sont la dernière answers.
+Le commentaire inclu dans la question est la dernière *answers*.
 
 Selon vos questions et leurs types, il faut faire correspondre la réponse obtenue par l'accès à la liste content_responses à vos noms de colonnes (voir partie précédentes).
 
