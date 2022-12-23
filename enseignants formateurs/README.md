@@ -134,4 +134,4 @@ L'application peut fonctionner en local et en ligne. Pour la rendre disponible e
 
 ### ef_phase2_dashboard.R
 
-Le tableau de bord ef_phase2_dashboard.R est similaire au tableau de bord ef_phase1_dashboard.R. Seules les questions posées dans le questionnaire changent. 
+Le tableau de bord ef_phase2_dashboard.R est similaire au tableau de bord ef_phase1_dashboard.R. Seules l'intitulé des questions posées dans le questionnaire changent. 
