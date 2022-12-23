@@ -22,7 +22,9 @@ Un fenêtre s'affiche. Cliquez sur le bouton Télécharger, un fichier intitulé
 
 Il peut être intéressant de conserver également une copie .pdf du sondage. Pour ce faire allez dans Concevez un sondage et cliquez sur l'icône d'impression en bas à gauche. Définissez les options de votre choix et cliquez sur le bouton Télécharger le PDF.
 
-#### Téléchargement des données brutes sur SurveyMonkey
+#### Lancer le tableau de bord
+
+Ouvrir le fichier 
 
 
 
