@@ -44,7 +44,7 @@ observe({
 
 ### ef_phase1_dashboard.R
 
-Le tableau de bord accède directement aux données d'un sondage SurveyMonkey réalisé préalablement (voir survey_ef_d1.pdf).
+L'application accède directement aux données d'un sondage SurveyMonkey réalisé préalablement (voir survey_ef_d1.pdf).
 
 Lorsque lancé, le tableau de bord met à jour via l'API de SurveyMonkey les données récoltées. Ces données sont stockées dans un fichier data_ef_d1.rds lu et mis à jour par l'application. 
 
