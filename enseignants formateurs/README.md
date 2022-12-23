@@ -6,7 +6,35 @@ Les tableaux de bord "enseignants-formateurs" sont des applications R Shiny inte
 
 ## Mise en marche rapide
 
-Télécharger le tableau de bord de votre choix (ef_phase1_dashboard.R ou ef_phase2_dashboard.R) dans R Studio et les données fictives qui s'y rapportent (data_ef_d1_random.rds ou data_ef_d2_random.rds). Placer le script et les données dans un même fichier. Lancer le tableau de bord avec R Studio. 
+Télécharger le tableau de bord de votre choix (ef_phase1_dashboard.R ou ef_phase2_dashboard.R) dans R Studio et les données fictives qui s'y rapportent (data_ef_d1_random.rds ou data_ef_d2_random.rds). Placer le script et les données dans un même fichier. Lancer le tableau de bord avec R Studio. Indiquez un identifiant EF, correspondant à un code unique donné aux enseignants formateurs pour accéder uniquement à leur données. La liste des identifiants est présente dans le script :
+
+```R
+
+observe({
+    
+    if (input$id %in% c("5090on3",
+                        "6ev1wd5",
+                        "bsay5t9",
+                        "34vnyfj",
+                        "xt8tb0u",
+                        "4d9ug6k",
+                        "ug8a6dr",
+                        "z9jza5v",
+                        "zoehjqg",
+                        "6hz3qkm",
+                        "hg0ybjf",
+                        "3yufg4t",
+                        "svx837j",
+                        "40aw4kh",
+                        "s1v9vnj",
+                        "p2jie1k",
+                        "omos3ix",
+                        "2l0xtqz",
+                        "43omp4v",
+                        "8c4kpz3")) {
+
+
+```
 
 # Marche à suivre pour utiliser les tableaux de bord
 
@@ -84,8 +112,15 @@ content_collectors$data[[1]]$id  # the id of the first collector of your survey
 
 ## Adapter le tableau de bord à votre propre sondage
 
+Le script doit être adapté aux questions de votre sondage. Trois types de questions sont traitées ici. Ils ne couvrent pas l'entiereté des types de questions possibles proposés par SurveyMonkey qui peuvent nécessiter une modification spécifique du script. 
 
-A venir...
+### Les questions du types *Cases à cocher*
+
+
+
+
+
+
 
 
 ## Mettre en ligne l'application
