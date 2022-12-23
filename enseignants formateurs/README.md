@@ -85,7 +85,7 @@ content_collectors$data[[1]]$id  # the id of the first collector of your survey
 ## Adapter le tableau de bord à votre propre sondage
 
 
-
+A venir...
 
 
 ## Mettre en ligne l'application
