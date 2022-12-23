@@ -4,6 +4,8 @@
 
 Les tableaux de bord "enseignants-formateurs" sont des applications R Shiny interactives permettent de disposer d'un retour en temps réel de sondages SurveyMonkey sous forme de visualisations graphiques.
 
+![alt text](screenshot_ef_d1.png)
+
 ## Mise en marche rapide
 
 Télécharger le tableau de bord de votre choix (ef_phase1_dashboard.R ou ef_phase2_dashboard.R) dans R Studio et les données fictives qui s'y rapportent (data_ef_d1_random.rds ou data_ef_d2_random.rds). Placer le script et les données dans un même fichier. Lancer le tableau de bord avec R Studio. Indiquez un identifiant EF, correspondant à un code unique donné aux enseignants formateurs pour accéder uniquement à leur données. La liste des identifiants est présente dans le script :
