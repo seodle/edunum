@@ -116,14 +116,101 @@ content_collectors$data[[1]]$id  # the id of the first collector of your survey
 
 Le script doit être adapté aux questions de votre sondage. Trois types de questions sont traitées ici. Ils ne couvrent pas l'ensemble des types de questions possibles proposés par SurveyMonkey qui peuvent nécessiter une modification spécifique du script. 
 
-### Les questions du type *Cases à cocher*
+### Mettre à jour le nom des colonnes du tableau de données
+
+Lorsque l'application met à jour les données via l'API de SurveyMonkey, les données sont stockées dans un data frame appelé *data* lui-même stockés dans le fichier *data_ef_d1.rds*.
+
+Dans SurveyMonkey, chaque valeur des questions de type *case à cocher* (plusieurs valeurs peuvent être sélectionnées) possède une colonne spécfique. Par exemple, pour la question 2 (voir survey_ef_d1.pdf) *Dans quel établissement enseignez-vous?, les répondants peuvent indiqués 1 ou plusieurs degrés (de 1P à 12S) (voir code ci-dessous).
+
+Au contraire, les questions de type *choix multiple* (une seule valeur parmi celles proposées peuvent être sélectionnées) possèdent une seule colonne correpondant à la valeur choisie. Par exemple, pour la question 3 (voir survey_ef_d1.pdf) *Quand je participe à une formation continue, j'essaie d'apprendre le plus possible*,les répondants peuvent choisir une seule réponse sur l'échelle de Likert proposée et la colonne correspondante est *motivation* (voir code ci-dessous).
+
+Les questions de type Matrice/échelle d'évaluation sont similaires aux questions *choix multiple*. Chaque question de la matrice possède une seule colonne correspond à la valeur choisie. Par exemple, la question 5 (voir survey_ef_d1.pdf) *Le contenu de la formation d'aujourd'hui*, les colonnes correspondantes sont *contenu_riche* et *contenu_adapte". Pour cette matrice, la possiblité de laisser un commentaire a également été ajouté, celui-ci possède également une colonne spécifique *appreciation_generale_commentaires*.
 
 
+```R
+#Questions
 
-
-
-
-
+   columns <- c("journee",
+                "date",
+                "id_binome",
+                "age",
+                "experience",
+                "etablissement",
+                "degre_1P",
+                "degre_2P",
+                "degre_3P",
+                "degre_4P",
+                "degre_5P",
+                "degre_6P",
+                "degre_7P",
+                "degre_8P",
+                "degre_9S",
+                "degre_10S",
+                "degre_11S",
+                "degre_12S",
+                "motivation",
+                "utilite_techno",
+                "contenu_riche",
+                "contenu_adapte",
+                "appreciation_generale_commentaires",
+                "engagement_formateurs",
+                "engagement_formateurs_commentaires",
+                "liens_formation_pratique",
+                "liens_formation_pratique_commentaire",
+                "interet_pratiques",
+                "interet_algorithmes",
+                "interet_partages",
+                "interet_scratch",
+                "interet_activites_commentaires",
+                "utilite_pratiques",
+                "utilite_algorithmes",
+                "utilite_partages",
+                "utilite_scratch",
+                "utilite_activites_commentaires",
+                "confiance_pratiques",
+                "confiance_algorithmes",
+                "confiance_partages",
+                "confiance_scratch",
+                "confiance_activites_commentaires",
+                "competence1",
+                "competence2",
+                "acquisition_pratiques_commentaires",
+                "competence3",
+                "competence4",
+                "competence5",
+                "acquisition_algorithmes_commentaires",
+                "competence6",
+                "competence7",
+                "acquisition_partage_commentaires",
+                "utiliser_nouveaux_apprentissages",
+                "intention_pratiques",
+                "intention_algorithmes",
+                "intention_partages",
+                "intention_scratch",
+                "intention_utilisation_commentaires",
+                "adoption_charte",
+                "adoption_livre",
+                "adoption_machine",
+                "adoption_jeu",
+                "adoption_orchestration",
+                "adoption_bestioles",
+                "adoption_thymio",
+                "adoption_bluebot",
+                "adoption_edunum",
+                "adoption_utiliser_application",
+                "adoption_chope_pub",
+                "adoption_ecrans",
+                "adoption_tapis",
+                "adoption_stopmotion",
+                "adoption_album_loupe",
+                "adoption_album_livre",
+                "adoption_album_pfff",
+                "adoption_pasconcerne",
+                "conditions_compatibilite",
+                "conditions_soutien",
+                "conditions_charge",
+                "conditions_plusvalue")
+```
 
 
 
