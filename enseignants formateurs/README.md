@@ -114,9 +114,11 @@ content_collectors$data[[1]]$id  # the id of the first collector of your survey
 
 ## Adapter le tableau de bord à votre propre sondage
 
-Le script doit être adapté aux questions de votre sondage. Trois types de questions sont traitées ici. Ils ne couvrent pas l'entiereté des types de questions possibles proposés par SurveyMonkey qui peuvent nécessiter une modification spécifique du script. 
+Le script doit être adapté aux questions de votre sondage. Trois types de questions sont traitées ici. Ils ne couvrent pas l'ensemble des types de questions possibles proposés par SurveyMonkey qui peuvent nécessiter une modification spécifique du script. 
 
-### Les questions du types *Cases à cocher*
+### Les questions du type *Cases à cocher*
+
+
 
 
 
