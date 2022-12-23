@@ -116,18 +116,19 @@ content_collectors$data[[1]]$id  # the id of the first collector of your survey
 
 Le script doit être adapté aux questions de votre sondage. Trois types de questions sont traitées ici. Ils ne couvrent pas l'ensemble des types de questions possibles proposés par SurveyMonkey qui peuvent nécessiter une modification spécifique du script. 
 
-### Mettre à jour le nom des colonnes du tableau de données
+### Structure des questions
 
-Lorsque l'application met à jour les données via l'API de SurveyMonkey, les données sont stockées dans un data frame appelé *data* lui-même stockés dans le fichier *data_ef_d1.rds*.
+Lorsque l'application met à jour les données via l'API de SurveyMonkey, les données sont stockées dans un data frame appelé *data* lui-même stockés dans le fichier *data_ef_d1.rds*. Les colonnes de *data* correspondent à une ou plusieurs questions de votre sondage.
 
 Dans SurveyMonkey, chaque valeur des questions de type *case à cocher* (plusieurs valeurs peuvent être sélectionnées) possède une colonne spécfique. Par exemple, pour la question 2 (voir survey_ef_d1.pdf) *Dans quel établissement enseignez-vous?, les répondants peuvent indiqués 1 ou plusieurs degrés (de 1P à 12S) (voir code ci-dessous).
 
 Au contraire, les questions de type *choix multiple* (une seule valeur parmi celles proposées peuvent être sélectionnées) possèdent une seule colonne correpondant à la valeur choisie. Par exemple, pour la question 3 (voir survey_ef_d1.pdf) *Quand je participe à une formation continue, j'essaie d'apprendre le plus possible*,les répondants peuvent choisir une seule réponse sur l'échelle de Likert proposée et la colonne correspondante est *motivation* (voir code ci-dessous).
 
-Les questions de type *Matrice/échelle d'évaluation* sont similaires aux questions *choix multiple*. Chaque question de la matrice possède une seule colonne correspond à la valeur choisie. Par exemple, la question 5 (voir survey_ef_d1.pdf) *Le contenu de la formation d'aujourd'hui*, les colonnes correspondantes sont *contenu_riche* et *contenu_adapte". Pour cette matrice, la possiblité de laisser un commentaire a également été ajouté, celui-ci possède également une colonne spécifique *appreciation_generale_commentaires*.
+Les questions de type *Matrice/échelle d'évaluation* sont similaires aux questions *choix multiple*. Chaque question de la matrice possède une seule colonne correspond à la valeur choisie. Par exemple, la question 5 (voir survey_ef_d1.pdf) *Le contenu de la formation d'aujourd'hui*, les colonnes correspondantes sont *contenu_riche* et *contenu_adapte". Pour cette matrice, la possiblité de laisser un commentaire a également été ajoutée, celui-ci possède également une colonne spécifique *appreciation_generale_commentaires*.
 
 
 ```R
+
 #Questions
 
    columns <- c("journee",
@@ -211,6 +212,42 @@ Les questions de type *Matrice/échelle d'évaluation* sont similaires aux quest
                 "conditions_charge",
                 "conditions_plusvalue")
 ```
+
+
+### Récupérer les données par type de questions
+
+Les données du sondage récupérées via l'API sont stockées sous forme de liste dans la variable *content_responses*. L'accès aux réponses pour chaque question permet de remplir le data frame *data* (une ligne par participant) dont le nom des colonnes est présentée au dessus.
+
+L'accès à une réponse donnée se fait de la façon suivante :
+
+```R
+
+content_responses[[n_batch]]$data[[i]]$pages[[1]]$questions[[2]]$answers[[3]]$simple_text
+
+```
+
+n_batch correspond à quel batch de questions on accède (un batch correspond aux réponses de 50 participants dans SurveyMonekey)
+i est l'indice du participant
+1 est l'indice de la page dans le sondage
+2 est l'indice de la question dans le sondage
+3 est l'indice de la réponses à la question
+
+Le commentaire inclu dans la question sont la dernière answers.
+
+Selon vos questions et leurs types, il faut faire correspondre la réponse obtenue par l'accès à la liste content_responses à vos noms de colonnes (voir partie précédentes).
+
+Dans l'API de SurveyMonkey, les questions n'ayant pas obtenues de réponses ne sont pas enregistées en tant que NA. L'accès n'existe simplement pas et la tentative d'accès renvoie une erreur. Pour remplacer cette erreur par une valeur NA, chaque accès à la liste content_responses est entourée d'un try-catch retournant la valeur NA lorsque l'accès n'existe pas. 
+
+```R
+tryCatch(
+         content_responses[[n_batch]]$data[[i]]$pages[[2]]$questions[[2]]$answers[[1]]$simple_text,
+         error = function(e){return(NA)}
+       ), 
+```
+
+Dans cette exemple, l'accès à content_responses renvoie la réponse 1 pour la question 2 du sondage : Dans quel établissement enseignez-vous? correspond à la colonne "etablissement" dans ci-dessus. 
+
+
 
 
 
