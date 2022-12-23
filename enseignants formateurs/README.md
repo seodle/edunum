@@ -35,8 +35,9 @@ observe({
                         "43omp4v",
                         "8c4kpz3")) {
 
-
 ```
+
+Ce code est une variable personnalisée SurveyMonkey (voir https://help.surveymonkey.com/fr/surveymonkey/send/custom-variables/) inclus dans l'url du sondage envoyé aux enseignants ayant suivi la formation avec un binôme d'enseignants formateurs donné. Cela permet ensuite de sélectionner les données correpondant à un binôme d'enseignants formateurs en particulier sur le tableau de bord en indiquant l'identifiant EF en question. 
 
 # Marche à suivre pour utiliser les tableaux de bord
 
