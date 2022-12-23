@@ -32,7 +32,9 @@ Il est possible de supprimer certaines colonnes en les sélectionnant et en cliq
 
 Pour faciliter l'analyse des données, les intitulés des questions de la colonne Colonnes brutes doivent être renommés plus simplement selon la nomenclature de votre choix. Par exemple, la colonne *Veuillez indiquer le ou les degrés dans lequel vous enseignez plusieurs réponses possibles : 3P* peut être renommé *degre.3p*. Pour renommer une colonne, double cliquez dans la colonne Colonnes renommées en face de l'intitulé que vous souhaitez renommer.
 
-Une fois toutes les colonnes renommées, vous pouvez télécharger un codebook conservant ce tableau. Pour cela, cliquez sur Télécharger le codebook et choisissez le format de sortie souhaité. Enfin, cliquez en bas de la page sur Télécharger le fichier renommé. Un fichier .csv intitulé renamed.csv dans est sauvegardé dans le même dossier que le fichier processing-dashboard.R. 
+Une fois toutes les colonnes renommées, vous pouvez télécharger un codebook conservant ce tableau. Pour cela, cliquez sur Télécharger le codebook et choisissez le format de sortie souhaité. Enfin, cliquez en bas de la page sur Télécharger le fichier renommé. Un fichier .csv intitulé renamed.csv est sauvegardé dans le même dossier que le fichier processing-dashboard.R. 
+
+
 
 
 
