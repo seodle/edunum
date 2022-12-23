@@ -14,5 +14,4 @@ Le tableau de bord "traitement des données" est une application R Shiny interac
 
 Dans SurveyMonkey, allez dans Analysez les résultats puis Enregistrer sous -> fichier d'exportation -> Toutes les réponses indivduelles -> 
 
-
-https://i.imgur.com/mmIrvC5.png
+![alt text](https://i.imgur.com/mmIrvC5.png)
