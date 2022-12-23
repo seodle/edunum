@@ -124,7 +124,7 @@ Dans SurveyMonkey, chaque valeur des questions de type *case à cocher* (plusieu
 
 Au contraire, les questions de type *choix multiple* (une seule valeur parmi celles proposées peuvent être sélectionnées) possèdent une seule colonne correpondant à la valeur choisie. Par exemple, pour la question 3 (voir survey_ef_d1.pdf) *Quand je participe à une formation continue, j'essaie d'apprendre le plus possible*,les répondants peuvent choisir une seule réponse sur l'échelle de Likert proposée et la colonne correspondante est *motivation* (voir code ci-dessous).
 
-Les questions de type *Matrice/échelle d'évaluation* sont similaires aux questions *choix multiple*. Chaque question de la matrice possède une seule colonne correspond à la valeur choisie. Par exemple, la question 5 (voir survey_ef_d1.pdf) *Le contenu de la formation d'aujourd'hui*, les colonnes correspondantes sont *contenu_riche* et *contenu_adapte". Pour cette matrice, la possiblité de laisser un commentaire a également été ajoutée, celui-ci possède également une colonne spécifique *appreciation_generale_commentaires*.
+Les questions de type *Matrice/échelle d'évaluation* sont similaires aux questions *choix multiple*. Chaque question de la matrice possède une seule colonne correspond à la valeur choisie. Par exemple, la question 5 (voir survey_ef_d1.pdf) *Le contenu de la formation d'aujourd'hui*, les colonnes correspondantes sont *contenu_riche* et *contenu_adapte*. Pour cette matrice, la possiblité de laisser un commentaire a également été ajoutée, celui-ci possède également une colonne spécifique *appreciation_generale_commentaires*.
 
 
 ```R
