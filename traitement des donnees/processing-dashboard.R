@@ -2,7 +2,6 @@ library(shinyalert)
 library(shiny)
 library(shinydashboard)
 library(dplyr)
-library(plotly)
 library(stringr)
 library(DT)
 library(shinyjs)
@@ -10,12 +9,38 @@ library(tidyr)
 library(shinythemes)
 library(googledrive)
 
+###############################################################
+#                    GOOGLE API CONNEXION                     # 
+###############################################################
+
+options(
+  # whenever there is one account token found, use the cached token
+  gargle_oauth_email = TRUE,
+  # specify auth tokens should be stored in a hidden directory ".secrets"
+  gargle_oauth_cache = "app/.secrets"
+)
+
+googledrive::drive_auth()
+
 ##############################################################
-#                    DATA EVALUATION FILE                    # 
+#                  GET DATA EVALUATION FILE                  # 
 ##############################################################
 
+
+# x <- drive_get("~/dashboards_data/pilotage/data_evaluation.csv")      # Get the dribble for your file
+# saveRDS(x, file = "dribble.rds")                                      # Save it in a rds file so you can directly access to it later without having to use drive_get again
+
+file <- readRDS(file = "dribble.rds")
+drive_download(file,overwrite = TRUE)
+
 data_evaluation <- read.csv("data_evaluation.csv",header = TRUE, na.strings=c("","NA"), check.names = FALSE, sep = ";")
-file.copy("data_evaluation.csv", paste0("backup_data_evaluation/data_evaluation",format(Sys.time(), "_%d-%m-%Y_%H-%M-%S"),".csv"))
+
+###############################################################
+#                     BACKUP CURRENT DATA                     #
+###############################################################
+
+# Save of copy of the original file in the cloud before any modification
+#drive_upload("data_evaluation.csv",path=paste0("~/dashboards_data/pilotage/backup/",paste0("data_evaluation",format(Sys.time(), "_%Y-%m-%d_%H-%M-%S"),".csv")),overwrite = TRUE)
 
 # Comptérences RCnum
 
@@ -118,7 +143,7 @@ ui <- dashboardPage(title="Traitement des données d'évaluation",
     
     width = 300,
     
-    HTML("<p align='justify'>Ce tableau de bord permet de traiter les données destinées aux retours de questionnaires et au tableau de bord de l'évaluation de la formation EduNum</p>"),
+    HTML("<p align='justify'>Ce tableau de bord permet de générer de traiter les données destinées aux retours de questionnaires et au tableau de bord de l'évaluation de la formation EduNum</p>"),
     
     sidebarMenu(id = "sidebarid",
                 
@@ -131,7 +156,7 @@ ui <- dashboardPage(title="Traitement des données d'évaluation",
          conditionalPanel(
            'input.sidebarid == "page1"',
            fileInput("file1", label = "Charger le fichier CSV traité:", accept = ".csv"),
-           textInput("url", label = "Indiquer l'url du rapport détaillé:"),
+           textInput("url", label = "Indiquer l'url du pdf détaillé:"),
            selectInput(inputId = "var1",label = "Sélectionner le cycle ou la formation:",choices = c("C1", "C2a (5-6P)", "C2b (7-8P)","C2b (7-8P) 20 périodes", "C3 MUS", "Secondaire 2", "C3 SI")),
            selectInput(inputId = "var2",label = "Sélectionner la phase:",choices = c("Pilote", "Déploiement","Non concerné")),
            selectInput(inputId = "var3",label = "Sélectionner la volée:",choices = c(1:4, "Non concerné")),
@@ -335,10 +360,10 @@ ui <- dashboardPage(title="Traitement des données d'évaluation",
     
     tabItem(tabName = "page2",
 
-        DTOutput("file2"),
+        DTOutput("display_codebook"),
         
-        actionButton("remove", label = "Supprimer les colonnes inutiles"),
-        actionButton("download2", label = "Télécharger le fichier renommé"),
+        hidden(actionButton("remove", label = "Supprimer les colonnes inutiles")),
+        hidden(actionButton("download2", label = "Télécharger le fichier renommé")),
           
     ),
     
@@ -346,24 +371,19 @@ ui <- dashboardPage(title="Traitement des données d'évaluation",
             
             DTOutput(outputId = "file4"),
             
-            tags$div(actionButton("remove2", label = "Supprimer les lignes sélectionnées"),style="display:inline-block")
+            tags$div(hidden(actionButton("remove2", label = "Supprimer les lignes sélectionnées")),style="display:inline-block"),
+            tags$div(hidden(actionButton("upload", label = "Uploader les données pour le tableau de bord")),style="display:inline-block"),
     )
     
   )
 
 ))
-  
+
+
 server <- function(input, output, session) {
   
-  shinyjs::hide(id = "download2")
-  shinyjs::hide(id = "remove")
-  shinyjs::hide(id = "remove2")
-  shinyjs::hide(id = "validate")
-  shinyjs::hide(id = "download3")
-  
-  
   ###############################################################
-  #RENAMING
+  #                         RENAMING                            #
   ###############################################################
   
   getRawColnames <- function(data){ 
@@ -453,11 +473,12 @@ server <- function(input, output, session) {
     
   })
   
-  output$file2 <- renderDT({
+  output$display_codebook <- renderDT({
 
     rvs2$data
     
-    }, editable = TRUE, extensions="Buttons", options = list(scrollY = TRUE,columnDefs = list(list(width = '500px', targets = c(1))), pageLength = 200, dom = 'Bfrtip',buttons = list('copy', 'print', list(
+    }, editable = TRUE, extensions="Buttons", 
+          options = list(columnDefs = list(list(width = '500px', targets = c(1))), server = T,pageLength = 200,scroller = TRUE, dom = 'Bfrtip',buttons = list('copy', 'print', list(
           extend = 'collection',
           buttons = list(
             list(extend = 'csv', filename = "codebook"),
@@ -467,38 +488,35 @@ server <- function(input, output, session) {
         ))
     ))
   
-  
-  observe({
-    rvs2$data <- codebook()
-  })
-  
-  
   observeEvent(input$file2, {
   
       shinyjs::show(id = "download2")
       shinyjs::show(id = "remove")
+      rvs2$data <- codebook()
     
     })
   
   
   observeEvent(input$remove,{
     
-    if (!is.null(input$file2_rows_selected)) {
+    if (!is.null(input$display_codebook_rows_selected)) {
       
-      rvs2$columns <- as.numeric(input$file2_rows_selected)
-      rvs2$data <- rvs2$data[-as.numeric(input$file2_rows_selected),]
+      rvs2$columns <- as.numeric(input$display_codebook_rows_selected)
+      rvs2$data <- rvs2$data[-as.numeric(input$display_codebook_rows_selected),]
     }
   })
 
-  observeEvent(input$file2_cell_edit, {
-    rvs2$data <- editData(rvs2$data, input$file2_cell_edit)
+  observeEvent(input$display_codebook_cell_edit, {
+    rvs2$data <- editData(rvs2$data, input$display_codebook_cell_edit)
   })
-  
   
   observeEvent(input$download2,{
     
     data.ready <- file2()
-    data.ready <- data.ready[-rvs2$columns]
+    if(!is.null(rvs2$columns)) {
+      
+      data.ready <- data.ready[-rvs2$columns]
+    }
     data.ready = data.ready[-1,]
     colnames(data.ready) <- rvs2$data[,2]
 
@@ -1823,13 +1841,22 @@ server <- function(input, output, session) {
   })
   
   
+  observeEvent(input$upload,{
+    
+    drive_upload(paste0("data_evaluation.csv"),"~/dashboards_data/pilotage/",overwrite = TRUE)
+    updateActionButton(inputId = "upload", label = "Uploadé!")
+    delay(3000,updateActionButton(inputId = "upload", label = "Uploader les données pour le tableau de bord"))
+    
+  })
+  
+  
   # Contact
   
   observeEvent(input$openModal, {
     showModal(
       modalDialog(title = "Contact",
                   footer = modalButton("Fermer"),
-                  p("Ce tableau de bord est sous licence MIT. Pour tout renseignement : sunny.avry@epfl.ch"))
+                  p("Ce tableau de bord a été créé par l'équipe de recherche EduNum au LEARN (EPFL). Pour tout renseignement : sunny.avry@epfl.ch"))
     )
   })
   
